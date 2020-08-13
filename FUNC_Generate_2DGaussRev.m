@@ -35,7 +35,7 @@ function ret = FUNC_Generate_2DGaussRev(gsize, sigmax, sigmay,res)
     %%calculating guassian
     u  = (xm/sigmax).^2 + (ym/sigmay).^2;
     ret = exp(-u/2);
-
+    
 end
 
 function val = superCombine(a,b,sign,size,resolution)%%sign is either 'add' or 'subtract'
