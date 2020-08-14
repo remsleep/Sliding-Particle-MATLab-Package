@@ -19,6 +19,8 @@ function [REL_PARVEL, REL_PERPVEL, DISTANCE, COORD_MATRIX, DELTAANG, FRAMES] = .
 %NOTE: All numerical arrays stored in these fields must be row
 % vectors, not column vectors. One can use vertcat(velInfo.FIELD)'
 % rather than [velInfo.FIELD] below for fields not structured in this way
+%
+%
 
 %Set value of WINDOW if unset by user
 if nargin == 1

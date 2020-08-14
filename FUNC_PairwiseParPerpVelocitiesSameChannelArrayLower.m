@@ -118,7 +118,7 @@ for currFrame = 1:max(FRAME)
         %Reorder data into vector form by using separations to identify non-zero entries
             %Filter based on angle diff. with logic matrices
         outliersMat = ~(abs(diffAngMat) >= abs(cutOffAngle));
-        indexMat = logical(tril(true(size(separations)),1).*(outliersMat));    
+        indexMat = logical(tril(true(size(separations)),-1).*(outliersMat));    
         sizeData = sum(sum(indexMat));
 
             %Store data

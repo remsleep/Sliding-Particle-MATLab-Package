@@ -3,7 +3,7 @@
 % currDir = [baseDir, num2str(currBatch)];
 % load(fullfile(currDir,'trajectoryData.mat'));
 %Define scalings, if necessary
-directory = 'C:\Users\Rémi Boros\OneDrive\Documents\MATLAB\Lemma MT Tracking Code\Essential Scripts\Stephen Linnea Old Velocities';
+directory = 'C:\Users\Rémi Boros\OneDrive\Documents\MATLAB\Lemma MT Tracking Code\Sliding-Particle-MATLab-Package\Stephen Linnea Old Velocities';
 fileName = 'AnalysisDataChange_Remi.csv';
 pixelConv = 6.5*2/100;      %%In um/pix
 timeConv = 0.35;            %%In seconds/frame
@@ -49,21 +49,21 @@ disp('Calculating relative velocities...')
 %% Average velocities wrt binned velocities
 allVelInfo = [relParVel; relPerpVel; Coords(1,:); Coords(2,:)];
 [allPeaks, allAvgs, binCoords] = FUNC_2DHistogramVelOverPositionalSeparation(allVelInfo, 10);
-lo_allVelInfo = [lo_relParVel; lo_relPerpVel; lo_Coords(1,:); lo_Coords(2,:)];
-[lo_allPeaks, lo_allAvgs, lo_binCoords] = FUNC_2DHistogramVelOverPositionalSeparation(lo_allVelInfo, 10);
+% lo_allVelInfo = [lo_relParVel; lo_relPerpVel; lo_Coords(1,:); lo_Coords(2,:)];
+% [lo_allPeaks, lo_allAvgs, lo_binCoords] = FUNC_2DHistogramVelOverPositionalSeparation(lo_allVelInfo, 10);
 % flippedY_allVelInfo = [fY_relParVel; fY_relPerpVel; fY_Coords(1,:); fY_Coords(2,:)];
 % [fY_allPeaks, fY_allAvgs, fY_binCoords] = FUNC_2DHistogramVelOverPositionalSeparation(flippedY_allVelInfo, 10);
 
 %% Convert data to .csv for Stephen analysis [RSep; RelAng; DeltaAng; Vpar; Vperp; T]
 preArray = [sqrt(Coords(1,:).^2 + Coords(2,:).^2); atan2(Coords(1,:),Coords(2,:)); ...
-    DeltaAng; relParVel; relPerpVel; Frames]';
+    DeltaAng; -relParVel; -relPerpVel; Frames]';
 FUNC_Array2CSVSpecific(directory,fileName,preArray);
-lo_preArray = [sqrt(lo_Coords(1,:).^2 + lo_Coords(2,:).^2); atan2(lo_Coords(1,:),lo_Coords(2,:)); ...
-    lo_DeltaAng; lo_relParVel; lo_relPerpVel; lo_Frames]';
-FUNC_Array2CSVSpecific(directory,['Lower_' fileName],lo_preArray);
+% lo_preArray = [sqrt(lo_Coords(1,:).^2 + lo_Coords(2,:).^2); atan2(lo_Coords(1,:),lo_Coords(2,:)); ...
+%     lo_DeltaAng; lo_relParVel; lo_relPerpVel; lo_Frames]';
+% FUNC_Array2CSVSpecific(directory,['Lower_' fileName],lo_preArray);
 %%
 BinInterframeRodPairDetails2(directory,fileName,timeConv,pixelConv,1,1000);
-BinInterframeRodPairDetails2(directory,['Lower_' fileName],timeConv,pixelConv,1,1000);
+% BinInterframeRodPairDetails2(directory,['Lower_' fileName],timeConv,pixelConv,1,1000);
 
 %% Get the peak velocities for these velocities
 % % close all
