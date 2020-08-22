@@ -84,8 +84,8 @@ for currFrame = 1:max(FRAME)
         tempParVels = PARVEL(trajsInFrame);
         tempPerpVels = PERPVEL(trajsInFrame);
         %Exploit outer product to find relative velocities between all pairs
-        relParVels = tril((tempParVels(:).'- tempParVels(:))');
-        relPerpVels = tril((tempPerpVels(:).'- tempPerpVels(:))');
+        relParVels = ((tempParVels(:).'- tempParVels(:))');
+        relPerpVels = ((tempPerpVels(:).'- tempPerpVels(:))');
         
         %NOTE: In all matrices below, rows represent info of the reference
         %particle (particle 1), while columns represent info of the paired
@@ -99,8 +99,8 @@ for currFrame = 1:max(FRAME)
         %%%Calculate coordinates in parallel, perpendicular frame using
         %%%orientation of "particle 1"
         %First, define matrices of differences in x and y between each trajectory
-        diffXMat = tril((tempX(:).'-tempX(:))');
-        diffYMat = tril((tempY(:).'-tempY(:))');
+        diffXMat = ((tempX(:).'-tempX(:))');
+        diffYMat = ((tempY(:).'-tempY(:))');
         diffAngMat = wrapToPi(2*tril((tempAng(:).'-tempAng(:))'))/2;              
         %Define matrix of angles to be used to calculate cos(theta1) and sin(theta1)
         angleMat = (ones(numel(tempAng),1)'.*tempAng(:));
