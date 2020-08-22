@@ -52,7 +52,8 @@ for i = 1:length(TRAJECTORY) %Go through Each Trajectory
         
         %Store parallel velocities
         TRAJECTORY(i).PERPVEL(t) = PERPENDI_FIT.Coefficients.Estimate(2)*pixelConv/timeConv;
-            
+        
+        
     end
     
     %Rescale x,y,length if necessary

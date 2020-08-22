@@ -1,4 +1,4 @@
-function ds=Stephen_CalcRelVelocities2(directory)
+function rawdata=Stephen_CalcRelVelocities2(DataSet)
 % This program measures the interframe velocity between rod pairs!
 % For example, the program will find all of the rods which appear in consecutive frames (conserved particle IDs)
 % and then calculates the relative velocities between those pairs.
@@ -29,35 +29,33 @@ dt=1; %Set the inter-frame time-step over which velocities are measured IN Delta
 
 
 %%
-%Prepare a variable on the disk to save to periodically to speed things up
-%and prevent memory issues. This will be a datastore.
-%make new directory for saving data.  This will be a datastore for analysis.
-analysisdir=strcat(directory,'\AnalysisDirectory3');   mkdir(analysisdir);
-savename=strcat(analysisdir,'\AnalysisDatachange2.csv');
+% % Prepare a variable on the disk to save to periodically to speed things up
+% % and prevent memory issues. This will be a datastore.
+% % make new directory for saving data.  This will be a datastore for analysis.
+% analysisdir=strcat(directory,'\AnalysisDirectory3');   mkdir(analysisdir);
+% savename=strcat(analysisdir,'\AnalysisDatachange2.csv');
+% 
+% % Write the File Headers to the csv file.
+% fileID= fopen(savename, 'w');
+% % Output this:  [Rsep RelAngle DeltaA DeltaS DeltaVx DeltaVy Vpara Vperp];
+% fprintf(fileID,'%12s, %12s, %12s, %12s, %12s, %12s \n',...
+%     'Rsep', 'RelAngle', 'DeltaA', 'Vx', 'Vy','time');
+% fclose(fileID);
+% 
+% % Save every X frames.
+% DumpEvery=200;
 
-%Write the File Headers to the csv file.
-fileID= fopen(savename, 'w');
-%Output this:  [Rsep RelAngle DeltaA DeltaS DeltaVx DeltaVy Vpara Vperp];
-fprintf(fileID,'%12s, %12s, %12s, %12s, %12s, %12s \n',...
-    'Rsep', 'RelAngle', 'DeltaA', 'Vx', 'Vy','time');
-fclose(fileID);
 
-%Save every X frames.
-DumpEvery=200;
 
-%%
-%LOAD TRACKS DATA
-load(strcat(directory,'\tracks.mat'));  %THIS CONTAINS tr
 
 %Sort the incoming data by frame number.
-TrackData = sortrows(tr',3); %sort by frame #
+TrackData = sortrows(DataSet,3); %sort by frame #
 u = unique(TrackData(:,3));  %unique FRAME #s
 endframe=size(u,1)-dt;
 
-h = waitbar(0,'Calculating Interframe Rod Pair Data');
+
 rawdata=[];
-for i=1:endframe;
-    waitbar(i/endframe,h);
+for i=1:endframe
     
     Ind1=[]; Ind2=[];  %CLEAR OUT SHIT!
     rows1=[]; rows2=[]; IDs1=[]; IDs2=[];
@@ -156,24 +154,26 @@ for i=1:endframe;
     end
     
     %Save the data every X iterations to a csv file.
-    if mod(i,DumpEvery)==0;
-        dlmwrite(savename,rawdata,'-append');
-        %secondpt=size(rawdata,1)+firstpt-1; %set the first index.
-        %m.rawdata(firstpt:secondpt,1:8) = rawdata;  %append the disk variable rawdata.
-        %firstpt=secondpt+1; %incriment the saving matrix index.
-        rawdata=[];
-    elseif i==endframe;
-        dlmwrite(savename,rawdata,'-append');
-        %secondpt=size(rawdata,1)+firstpt-1; %set the first index.
-        %m.rawdata(firstpt:secondpt,1:8) = rawdata;  %append the disk variable rawdata.
-        %firstpt=secondpt+1; %incriment the saving matrix index.
-        rawdata=[];
-    end
+%     if mod(i,DumpEvery)==0;
+%         dlmwrite(savename,rawdata,'-append');
+%         %secondpt=size(rawdata,1)+firstpt-1; %set the first index.
+%         %m.rawdata(firstpt:secondpt,1:8) = rawdata;  %append the disk variable rawdata.
+%         %firstpt=secondpt+1; %incriment the saving matrix index.
+%         rawdata=[];
+%     elseif i==endframe;
+%         dlmwrite(savename,rawdata,'-append');
+%         %secondpt=size(rawdata,1)+firstpt-1; %set the first index.
+%         %m.rawdata(firstpt:secondpt,1:8) = rawdata;  %append the disk variable rawdata.
+%         %firstpt=secondpt+1; %incriment the saving matrix index.
+%         rawdata=[];
+%     end
     
 end
 
 
-ds=datastore(savename);
+
+% ds=datastore(savename);
+
 
 
 

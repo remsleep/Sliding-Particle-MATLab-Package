@@ -24,7 +24,7 @@ function [trajectoryParams] = FUNC_getTrajectoryParameters(MT_DATA, IMAGES, fram
     %Begin loop to search for acceptable length and width parameters
     while notSatisfied
         figure()
-        [TRAJECTORY] = FUNC_TrajectoryTracker(MT_DATA, trajectoryParams, framesTot);
+        [TRAJECTORY] = FUNC_TrajectoryTrackerRev(MT_DATA, trajectoryParams, framesTot);
         FUNC_TrajectoryOverlayViewerImg(TRAJECTORY, IMAGES, 0, 20);
         [trajectoryParams, notSatisfied] = updateParameters(trajectoryParams);
         close

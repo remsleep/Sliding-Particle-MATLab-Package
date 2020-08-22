@@ -1,6 +1,6 @@
 %% Define directory
- currDir = 'C:\Users\Rémi Boros\OneDrive\Documents\MATLAB\Lemma MT Tracking Code\For Linnea';
- DATA_PATH = fullfile(currDir, 'tifs');
+ currDir = 'C:\Users\Jude\Documents\MATLAB\For Linnea\Data tifs';
+ DATA_PATH = fullfile(currDir, 'C2 tifs');
  [xSize, ySize] = FUNC_getImgDims(DATA_PATH, 'tif');
  
  %% Get Tracer particles

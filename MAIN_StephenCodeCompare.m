@@ -12,7 +12,7 @@ angleCutOff = 10;           %%Max angle in degrees allowed between MTs
 ySize = 1280;
 binSize = 10;
 
-%% Calculate velocities; assums [x, y, frame, orientation, ID] array structure
+%% Calculate velocities; assumes [x, y, frame, orientation, ID] array structure
 disp('Calculating velocities...')
 tic
 Stephen_CalcRelVelocities2(directory);
