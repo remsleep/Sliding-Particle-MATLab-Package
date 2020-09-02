@@ -20,9 +20,9 @@ first3 = max(find(tr(5,:)==3));
 tr3 = tr(:,1:first3);
 disp('Calculating velocities...')
 tic
-
+[finalData,truncData] = FUNC_FindVelocityDifferencesSameChannelFromArray(tr,pixelConv,timeConv, deg2rad(angleCutOff);
 % velInfo = FUNC_FindVelocityFromArray(tr1000, WINDOW, pixelConv, timeConv);
-velInfo = FUNC_FindVelocityFromArray(tr3, 1, 1);
+% velInfo = FUNC_FindVelocityFromArray(tr, 1, 1);
 toc
 
 %% Convert array to structure

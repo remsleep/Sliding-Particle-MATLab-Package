@@ -1,4 +1,4 @@
-function [TRAJECTORY] = FUNC_FindVelocity(TRAJECTORY, pixelConv, timeConv)
+function [TRAJECTORY] = FUNC_FindVelocityWrongAngles(TRAJECTORY, pixelConv, timeConv)
 %FUNC_FINDVELOCITY Takes in TRAJECTORY, a structure containing all x
 %and y coordinates, orientations, frames, and length information as fields.
 %The function converts the structure into a series of vectors and
@@ -6,6 +6,9 @@ function [TRAJECTORY] = FUNC_FindVelocity(TRAJECTORY, pixelConv, timeConv)
 %defined by the directors normal and parallel to each particle at a given
 %time.PIXELCONV and TIMECONV are conversion variables indicating the number
 %of um/pixel and seconds/frame, respectively
+
+%This function fails to account for correct angles during transformation
+%for pairwise velocity differences down the line
 
 %Set pixel and time conversions to 1 if left undefined by user
 if nargin == 1

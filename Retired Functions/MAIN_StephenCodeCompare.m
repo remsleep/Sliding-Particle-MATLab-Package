@@ -4,8 +4,8 @@
 % load(fullfile(currDir,'trajectoryData.mat'));
 %Define scalings, if necessary
 directory = 'C:\Users\Rémi Boros\OneDrive\Documents\MATLAB\Lemma MT Tracking Code\Sliding-Particle-MATLab-Package\Stephen Linnea Old Velocities';
-fileName = 'First3Trajs_AnalysisDataChange2';
-analysisDir = 'First3Trajs';
+fileName = 'FullLinneaData';
+analysisDir = 'FullLinneaData';
 pixelConv = 6.5*2/100;      %%In um/pix
 timeConv = 0.35;            %%In seconds/frame
 WINDOW = 2;                 %%Window of integration for which velocities are calculated
@@ -19,8 +19,8 @@ tic
 Stephen_CalcRelVelocities2(directory,analysisDir,fileName);
 toc
 
-%% Load data and convert to array
-dataTable = readtable(fullfile(directory, analysisDir, fileName));
+ %% Load data and convert to array
+dataTable = readtable([fullfile(directory, analysisDir, fileName) '.csv']);
 SD_relVelInfo = table2array(dataTable);     % Column order is [Rsep RelAngle DeltaA Vpar Vperp time]
 
 %% Calculate parallel and perpendicular separation from Rsep and RelAngle

@@ -32,7 +32,7 @@ w = warning ('off','all');
 %warning(w);
 
 %% Set Filenames and directories
-analysisdir=strcat(directory,'\AnalysisDirectory3');
+analysisdir=strcat(directory,'\FullLinneaData');
 mkdir(analysisdir);
 datastorename=fullfile(analysisdir,fileName);
 savename2=strcat(analysisdir,'\AnalysisVx',fileName,num2str(lowerframe),'.mat');

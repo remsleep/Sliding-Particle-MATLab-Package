@@ -101,7 +101,7 @@ for currFrame = 1:max(FRAME)
         %First, define matrices of differences in x and y between each trajectory
         diffXMat = ((tempX(:).'-tempX(:))');
         diffYMat = ((tempY(:).'-tempY(:))');
-        diffAngMat = wrapToPi(2*tril((tempAng(:).'-tempAng(:))'))/2;              
+        diffAngMat = wrapToPi(2*((tempAng(:).'-tempAng(:))'))/2;              
         %Define matrix of angles to be used to calculate cos(theta1) and sin(theta1)
         angleMat = (ones(numel(tempAng),1)'.*tempAng(:));
         %Find transformed coordinates
