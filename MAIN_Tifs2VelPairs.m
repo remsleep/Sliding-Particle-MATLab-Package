@@ -1,9 +1,9 @@
 %% Define variables and parameters
 csvName = 'CombinedData';
-combinedDir = 'D:\Alex Two Color MT Data\Data Set 1\Combined';
+combinedDir = 'D:\Alex  Two Color MT Data\Data Set 1\Combined';
 dt = 1;
-pixelConv = 1;
-timeConv = 1;
+pixelConv = .101;
+timeConv = 1.29;
 
 
 %% %%%%%%%%%%%%%%%% CHANNEL 1 %%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -105,4 +105,9 @@ mkdir(combinedDir);
 save(fullfile(combinedDir, 'tracks.mat'), 'tracks');
 
 %% Find velocity pairs from trajectories
+FUNC_Trajs2VelPairs(combinedDir,combinedDir,[csvName '_unscaled'],dt,1,1);
 FUNC_Trajs2VelPairs(combinedDir,combinedDir,csvName,dt,pixelConv,timeConv);
+
+%% Check with Linnea analysis
+BinInterframeRodPairDetails2(combinedDir,[csvName '_unscaled'],1,1,1,1149)
+BinInterframeRodPairDetails2(combinedDir,[csvName '_unscaled'],timeConv,pixelConv,1,1149)

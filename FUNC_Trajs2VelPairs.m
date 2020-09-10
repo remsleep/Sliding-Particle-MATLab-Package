@@ -195,19 +195,25 @@ for currFrame=1:endFrame
         % Concatenate data into a local variable to save
         rawdata = [rawdata ; Rsep RelAngle DeltaA Vpar Vperp time ch1 ch2];
         
-        %Convert units from pixels and frames to um and seconds
-        rawdata(:,[1 4 5]) = rawdata(:,[1 4 5]) * pixelConv;
-        rawdata(:,4:5) = rawdata(:,4:5) / timeConv;
-        rawdata(:,6) = rawdata(:,6) * timeConv;
         
     end
     
     %Save the data every X iterations to a csv file.
     if mod(currFrame,DumpEvery)==0
+        %Convert units from pixels and frames to um and seconds
+        rawdata(:,[1 4 5]) = rawdata(:,[1 4 5]) * pixelConv;
+        rawdata(:,4:5) = rawdata(:,4:5) / timeConv;
+        rawdata(:,6) = rawdata(:,6) * timeConv;
+        %Save data
         dlmwrite(savename,rawdata,'-append');
         outData = [outData; rawdata];
         rawdata=[];
     elseif currFrame==endFrame
+        %Convert units from pixels and frames to um and seconds
+        rawdata(:,[1 4 5]) = rawdata(:,[1 4 5]) * pixelConv;
+        rawdata(:,4:5) = rawdata(:,4:5) / timeConv;
+        rawdata(:,6) = rawdata(:,6) * timeConv;
+        %Save data
         dlmwrite(savename,rawdata,'-append');
         outData = [outData; rawdata];
         rawdata=[];
