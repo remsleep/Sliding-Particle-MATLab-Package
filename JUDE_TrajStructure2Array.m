@@ -17,9 +17,9 @@ function TrajArray = JUDE_TrajStructure2Array(TRAJ)
     %%Store Info in Array
     firstIndex = 1;
     for currTraj = 1:size(TRAJ,2)
-        TrajArray(firstIndex:firstIndex + numel(TRAJ(currTraj).FRAME)-1,1) = TRAJ(currTraj).X';
-        TrajArray(firstIndex:firstIndex + numel(TRAJ(currTraj).FRAME)-1,2) = TRAJ(currTraj).Y;
-        TrajArray(firstIndex:firstIndex + numel(TRAJ(currTraj).FRAME)-1,3) = TRAJ(currTraj).FRAME;
+        TrajArray(firstIndex:firstIndex + numel(TRAJ(currTraj).FRAME)-1,1) = TRAJ(currTraj).FRAME;
+        TrajArray(firstIndex:firstIndex + numel(TRAJ(currTraj).FRAME)-1,2) = TRAJ(currTraj).X;
+        TrajArray(firstIndex:firstIndex + numel(TRAJ(currTraj).FRAME)-1,3) = TRAJ(currTraj).Y;
         TrajArray(firstIndex:firstIndex + numel(TRAJ(currTraj).FRAME)-1,4) = TRAJ(currTraj).ORIENT;
         TrajArray(firstIndex:firstIndex + numel(TRAJ(currTraj).FRAME)-1,5) = TRAJ(currTraj).ID;
         firstIndex = firstIndex + numel(TRAJ(currTraj).FRAME);
