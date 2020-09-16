@@ -1,4 +1,4 @@
-function ds=Stephen_CalcRelVelocities2(directory)
+function ds=Stephen_CalcRelVelocities2(directory,analysisDir,csvName)
 % This program measures the interframe velocity between rod pairs!
 % For example, the program will find all of the rods which appear in consecutive frames (conserved particle IDs)
 % and then calculates the relative velocities between those pairs.
@@ -32,14 +32,16 @@ dt=1; %Set the inter-frame time-step over which velocities are measured IN Delta
 %Prepare a variable on the disk to save to periodically to speed things up
 %and prevent memory issues. This will be a datastore.
 %make new directory for saving data.  This will be a datastore for analysis.
-analysisdir=strcat(directory,'\AnalysisDirectory3');   mkdir(analysisdir);
-savename=strcat(analysisdir,'\AnalysisDatachange2.csv');
+analysisdir=fullfile(directory,analysisDir);   mkdir(analysisdir);
+savename=strcat(analysisdir,'\',csvName,'.csv');
 
 %Write the File Headers to the csv file.
 fileID= fopen(savename, 'w');
 %Output this:  [Rsep RelAngle DeltaA DeltaS DeltaVx DeltaVy Vpara Vperp];
-fprintf(fileID,'%12s, %12s, %12s, %12s, %12s, %12s \n',...
-    'Rsep', 'RelAngle', 'DeltaA', 'Vx', 'Vy','time');
+fprintf(fileID,...
+    '%12s, %12s, %12s, %12s, %12s, %12s, %12s, %12s, %12s, %12s, %12s, %12s, %12s, %12s, %12s, %12s, %12s, %12s \n',...
+    'Rsep', 'RelAngle', 'DeltaA', 'Vx', 'Vy','time', 'X1', 'Y1','XPar1', 'XPerp1',...
+    'X2', 'Y2', 'XPar2', 'XPerp2', 'Vx1','Vy1', 'Vx2', 'Vy2');
 fclose(fileID);
 
 %Save every X frames.
@@ -47,10 +49,12 @@ DumpEvery=200;
 
 %%
 %LOAD TRACKS DATA
-load(strcat(directory,'\tracks.mat'));  %THIS CONTAINS tr
+trStruct = load(strcat(directory,'\tracks.mat'));  %THIS CONTAINS tr
+fields = cell2mat(fieldnames(trStruct));
+tr = trStruct.(fields);
 
 %Sort the incoming data by frame number.
-TrackData = sortrows(tr',3); %sort by frame #
+TrackData = sortrows(tr,3); %sort by frame #
 u = unique(TrackData(:,3));  %unique FRAME #s
 endframe=size(u,1)-dt;
 
@@ -129,9 +133,14 @@ for i=1:endframe;
         % Separation between rods in pixels (r).
         Rsep= sqrt( ( P2t2(:,1) - P1t2(:,1) ).^2 + ( P2t2(:,2) - P1t2(:,2) ).^2 ) ;
         
-        %Relative Velocities (components.
-        Vx=  (( P2t2(:,1) - P1t2(:,1) ) - ( P2t1(:,1) - P1t1(:,1) ) )./ (abs(frame2-frame1)) ;
-        Vy=  (( P2t2(:,2) - P1t2(:,2) ) - ( P2t1(:,2) - P1t1(:,2) ) )./ (abs(frame2-frame1)) ;
+        %Velocity components
+        Vx1 = (P1t2(:,1) - P1t1(:,1)) ./ (abs(frame2-frame1));
+        Vx2 = (P2t2(:,1) - P2t1(:,1)) ./ (abs(frame2-frame1));
+        Vy1 = (P1t2(:,2) - P1t1(:,2)) ./ (abs(frame2-frame1));
+        Vy2 = (P2t2(:,2) - P2t1(:,2)) ./ (abs(frame2-frame1));
+        %Relative Velocities
+        Vx=  Vx2 - Vx1;
+        Vy=  Vy2 - Vy1;
         
 %         Vx=  (( P2t2(:,1) - P2t1(:,1) ) - ( P1t2(:,1) - P1t1(:,1) ) )./ (abs(frame2-frame1)) ;
 %         Vy=  (( P2t2(:,2) - P2t1(:,2) ) - ( P1t2(:,2) - P1t1(:,2) ) )./ (abs(frame2-frame1)) ;
@@ -151,7 +160,10 @@ for i=1:endframe;
         time=frame1.*ones(size(Rsep,1),1);
         
         % concatenate them into a local variable to save a few at a time.
-        rawdata = [rawdata ; Rsep RelAngle DeltaA Vx Vy time];
+        rawdata = [rawdata ; Rsep RelAngle DeltaA Vx Vy time ...
+            Data1(Ind1(:,1),1) Data1(Ind1(:,1),2) P1t1(:,1) P1t1(:,2) ...
+            Data1(Ind1(:,2),1) Data1(Ind1(:,2),2) P2t1(:,1) P2t1(:,2) ...
+            Vx1 Vy1 Vx2 Vy2 ];
         
     end
     

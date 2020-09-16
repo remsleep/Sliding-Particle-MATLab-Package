@@ -55,15 +55,16 @@ allVelInfo = [relParVel; relPerpVel; Coords(1,:); Coords(2,:)];
 % [fY_allPeaks, fY_allAvgs, fY_binCoords] = FUNC_2DHistogramVelOverPositionalSeparation(flippedY_allVelInfo, 10);
 
 %% Convert data to .csv for Stephen analysis [RSep; RelAng; DeltaAng; Vpar; Vperp; T]
-preArray = [sqrt(Coords(1,:).^2 + Coords(2,:).^2); atan2(Coords(1,:),Coords(2,:)); ...
-    DeltaAng; -relParVel; -relPerpVel; Frames]';
-FUNC_Array2CSVSpecific(directory,fileName,preArray);
-% lo_preArray = [sqrt(lo_Coords(1,:).^2 + lo_Coords(2,:).^2); atan2(lo_Coords(1,:),lo_Coords(2,:)); ...
-%     lo_DeltaAng; lo_relParVel; lo_relPerpVel; lo_Frames]';
-% FUNC_Array2CSVSpecific(directory,['Lower_' fileName],lo_preArray);
+% preArray = [sqrt(Coords(1,:).^2 + Coords(2,:).^2); atan2(Coords(2,:),Coords(1,:)); ...
+%     DeltaAng; -relParVel; -relPerpVel; Frames]';
+% FUNC_Array2CSVSpecific(directory,fileName,preArray);
+lo_preArray = [sqrt(lo_Coords(1,:).^2 + lo_Coords(2,:).^2); atan2(lo_Coords(2,:),lo_Coords(1,:)); ...
+    lo_DeltaAng; lo_relParVel; lo_relPerpVel; lo_Frames]';
+FUNC_Array2CSVSpecific(directory,['Lower_' fileName],lo_preArray);
+
 %%
-BinInterframeRodPairDetails2(directory,fileName,timeConv,pixelConv,1,1000);
-% BinInterframeRodPairDetails2(directory,['Lower_' fileName],timeConv,pixelConv,1,1000);
+% BinInterframeRodPairDetails2(directory,fileName,timeConv,pixelConv,1,1000);
+BinInterframeRodPairDetails2(directory,['Lower_' fileName],timeConv,pixelConv,1,1000);
 
 %% Get the peak velocities for these velocities
 % % close all

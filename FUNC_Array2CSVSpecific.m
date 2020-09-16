@@ -1,4 +1,4 @@
-function [ds] = FUNC_Array2CSVSpecific(directory,fileName,rawdata)
+function [ds] = FUNC_Array2CSVSpecific(directory,analysisDir,csvName,rawdata)
 %FUNC_ARRAY2CSV Converts an array containing
 % [R_Separation; RelativeAngle; AngleDifference; RelParVel; RelPerpVel; T]
 % for microtubule pairs and saves them in a CSV. This is NOT a generalized
@@ -7,8 +7,9 @@ function [ds] = FUNC_Array2CSVSpecific(directory,fileName,rawdata)
 %Prepare a variable on the disk to save to periodically to speed things up
 %and prevent memory issues. This will be a datastore.
 %make new directory for saving data.  This will be a datastore for analysis.
-analysisdir=strcat(directory,'\AnalysisDirectory3');   mkdir(analysisdir);
-savename=fullfile(analysisdir,fileName);
+analysisdir=fullfile(directory,analysisDir);   mkdir(analysisdir);
+savename=strcat(analysisdir,'\',csvName,'.csv');
+
 
 %Write the File Headers to the csv file.
 fileID= fopen(savename, 'w');

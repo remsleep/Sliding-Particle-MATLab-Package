@@ -1,4 +1,4 @@
-function BinInterframeRodPairDetails2(directory,fileName,timestep,PixCal,lowerframe,upperframe)
+function BinInterframeRodPairDetails2(directory,fileName,Timestep,PixCal,lowerframe,upperframe)
 
 
 %% Input Settings.  Simplified. 
@@ -32,10 +32,11 @@ w = warning ('off','all');
 %warning(w);
 
 %% Set Filenames and directories
-analysisdir=strcat(directory,'\AnalysisDirectory3');
-mkdir(analysisdir);
-datastorename=fullfile(analysisdir,fileName);
-savename2=strcat(analysisdir,'\AnalysisVx',fileName,num2str(lowerframe),'.mat');
+datastorename = fullfile(directory,[fileName '.csv']);
+% analysisdir=strcat(directory,'\FullLinneaData');
+% mkdir(analysisdir);
+% datastorename=fullfile(analysisdir,fileName);
+savename2=fullfile(directory,['Analysis_',fileName,'.mat']);
 
 %delete the old analysis.mat file (NOT CSV) in case of appending.
 if exist(savename2,'file')==2 ;
@@ -51,7 +52,8 @@ ds=datastore(datastorename);
 DatastoreInfo = dir(datastorename);
 
 % enable all the data in datastore.
-ds.SelectedVariableNames = {'Rsep','RelAngle', 'DeltaA', 'Vx','Vy','time'};
+ds.SelectedVariableNames = {'Rsep','RelAngle', 'DeltaA', 'Vpar','Vperp','Time','Ch1','Ch2'};
+% ds.SelectedVariableNames = ds.VariableNames;
 reset(ds); 
 
 %% Make Bin edges for the histogramming.
@@ -78,12 +80,12 @@ edgesV = [  -1.*fliplr([Vwidth: Vwidth: MaxV]) , 0 , Vwidth: Vwidth: MaxV ];
 %V=edgesV ;
 
 %set up empty arrays for binning and finding linear coordinates.
-VxArray = zeros( size(edgesXY,2) , size(edgesXY,2) , size(edgesV,2) );
-VyArray = VxArray;
-VxArray_E = VxArray;
-VyArray_E = VxArray;
-VxArray_C = VxArray;
-VyArray_C = VxArray;
+VparArray = zeros( size(edgesXY,2) , size(edgesXY,2) , size(edgesV,2) );
+VperpArray = VparArray;
+VparArray_E = VparArray;
+VperpArray_E = VparArray;
+VparArray_C = VparArray;
+VperpArray_C = VparArray;
 
 %Find the index of where the XY positions go from negative to positive.
 % 1:neg are indecies of the negative sort.
@@ -103,7 +105,7 @@ Vend= size(V,2);
 %%
 MTsVsTime=[]; RatioVsTime=[]; iteration=0;
 h = waitbar(0,'Binning Rod Data');  %initiate waitbar.
-while hasdata(ds);
+while hasdata(ds)
     %%
     data=[]; info=[]; bins=[]; iteration=iteration+1;
     [data ,info]= read(ds);
@@ -116,11 +118,11 @@ while hasdata(ds);
     data(badA,:)=[];
     
     %%FILTER DATA based on velocity out of range..
-    badV=find( data.Vx < -MaxV | data.Vx > MaxV | data.Vy < -MaxV | data.Vy > MaxV );
+    badV=find( data.Vpar < -MaxV | data.Vpar > MaxV | data.Vperp < -MaxV | data.Vperp > MaxV );
     data(badV,:)=[];
     
-    %%FILTER DATA based on time.
-    badT=find(data.time < FrameData(1) | data.time > FrameData(2));
+    %%FILTER DATA based on Time.
+    badT=find(data.Time < FrameData(1) | data.Time > FrameData(2));
     data(badT,:)=[];
     
    
@@ -130,20 +132,20 @@ while hasdata(ds);
     %Find the bin number (array coordinate)
     [~,~,binx] = histcounts( Xpos , edgesXY );
     [~,~,biny] = histcounts( Ypos , edgesXY );
-    [~,~,binvx] = histcounts(data.Vx,edgesV);
-    [~,~,binvy] = histcounts(data.Vy,edgesV);
+    [~,~,binvx] = histcounts(data.Vpar,edgesV);
+    [~,~,binvy] = histcounts(data.Vperp,edgesV);
     bins=[binx,biny,binvx,binvy];
     
     %Convert all of the indices to linear indices.
     %The X an Y positions are the Rsep and RelAngle index.
-    %The Vx or the Vy index is the 3rd dimension.
-    linearIndVx = sub2ind( size(VxArray) , bins(:,1) , bins(:,2) , bins(:,3)); %X Vels
-    linearIndVy = sub2ind( size(VyArray) , bins(:,1) , bins(:,2) , bins(:,4)); %Y Vels
+    %The Vpar or the Vperp index is the 3rd dimension.
+    linearIndVpar = sub2ind( size(VparArray) , bins(:,1) , bins(:,2) , bins(:,3)); %X Vels
+    linearIndVperp = sub2ind( size(VperpArray) , bins(:,1) , bins(:,2) , bins(:,4)); %Y Vels
     
     %Do the binning for the NET.
-    for i=1:size(linearIndVx,1);
-        VxArray(linearIndVx(i))=VxArray(linearIndVx(i))+1; %Bin Xs
-        VyArray(linearIndVy(i))=VyArray(linearIndVy(i))+1; %Bin Ys
+    for i=1:size(linearIndVpar,1);
+        VparArray(linearIndVpar(i))=VparArray(linearIndVpar(i))+1; %Bin Xs
+        VperpArray(linearIndVperp(i))=VperpArray(linearIndVperp(i))+1; %Bin Ys
     end
     
     
@@ -157,31 +159,31 @@ while hasdata(ds);
         find( (bins(:,1) <= neg ) & (bins(:,3) >= Vpos) ) ];
     
     %Convert all of the indices to linear indices.
-    linearIndVx_E = sub2ind( size(VxArray) , bins(row_E,1) , bins(row_E,2) , bins(row_E,3)); %X Vels
-    linearIndVy_E = sub2ind( size(VyArray) , bins(row_E,1) , bins(row_E,2) , bins(row_E,4)); %Y Vels
-    linearIndVx_C = sub2ind( size(VxArray) , bins(row_C,1) , bins(row_C,2) , bins(row_C,3)); %X Vels
-    linearIndVy_C = sub2ind( size(VyArray) , bins(row_C,1) , bins(row_C,2) , bins(row_C,4)); %Y Vels
+    linearIndVpar_E = sub2ind( size(VparArray) , bins(row_E,1) , bins(row_E,2) , bins(row_E,3)); %X Vels
+    linearIndVperp_E = sub2ind( size(VperpArray) , bins(row_E,1) , bins(row_E,2) , bins(row_E,4)); %Y Vels
+    linearIndVpar_C = sub2ind( size(VparArray) , bins(row_C,1) , bins(row_C,2) , bins(row_C,3)); %X Vels
+    linearIndVperp_C = sub2ind( size(VperpArray) , bins(row_C,1) , bins(row_C,2) , bins(row_C,4)); %Y Vels
     
     %Do the binning for the Extensile.
-    for i=1:size(linearIndVx_E,1);
-        VxArray_E(linearIndVx_E(i))=VxArray_E(linearIndVx_E(i))+1; %Bin Xs
-        VyArray_E(linearIndVy_E(i))=VyArray_E(linearIndVy_E(i))+1; %Bin Ys
+    for i=1:size(linearIndVpar_E,1);
+        VparArray_E(linearIndVpar_E(i))=VparArray_E(linearIndVpar_E(i))+1; %Bin Xs
+        VperpArray_E(linearIndVperp_E(i))=VperpArray_E(linearIndVperp_E(i))+1; %Bin Ys
     end
     %Do the binning for the Contractile.
-    for i=1:size(linearIndVx_C,1);
-        VxArray_C(linearIndVx_C(i))=VxArray_C(linearIndVx_C(i))+1; %Bin Xs
-        VyArray_C(linearIndVy_C(i))=VyArray_C(linearIndVy_C(i))+1; %Bin Ys
+    for i=1:size(linearIndVpar_C,1);
+        VparArray_C(linearIndVpar_C(i))=VparArray_C(linearIndVpar_C(i))+1; %Bin Xs
+        VperpArray_C(linearIndVperp_C(i))=VperpArray_C(linearIndVperp_C(i))+1; %Bin Ys
     end
     
     
     %%
     
-    %Rough metric of the number of MT pairs vs time.
-    MTsVsTime(iteration,1:2)=[ median(data.time)  size(Xpos,1)/(1+max(data.time)-min(data.time)) ];
+    %Rough metric of the number of MT pairs vs Time.
+    MTsVsTime(iteration,1:2)=[ median(data.Time)  size(Xpos,1)/(1+max(data.Time)-min(data.Time)) ];
     
     %Find the ratio of the number of extending vs contracting rods at each
     %data load.
-    RatioVsTime(iteration,1:2)=[ min(data.time)  size(linearIndVx_E,1)/(size(linearIndVx_E,1)+size(linearIndVx_C,1)) ];
+    RatioVsTime(iteration,1:2)=[ min(data.Time)  size(linearIndVpar_E,1)/(size(linearIndVpar_E,1)+size(linearIndVpar_C,1)) ];
     
     
     %%
@@ -190,45 +192,45 @@ end
 
 %% Make Weighted averages from the raw velocity distributions.
 
-Vx=[]; Vy=[]; Counts=[]; %THE NET field
-Vx_C=[]; Vy_C=[]; Counts_C=[]; %JUST CONTRACTILE
-Vx_E=[]; Vy_E=[]; Counts_E=[]; %JUST EXTENSILE
+Vpar=[]; Vperp=[]; Counts=[]; %THE NET field
+Vpar_C=[]; Vperp_C=[]; Counts_C=[]; %JUST CONTRACTILE
+Vpar_E=[]; Vperp_E=[]; Counts_E=[]; %JUST EXTENSILE
 
 
 
 %Make Weighted averages. This part cycles through each XY coordinate on the
-%VxArray and finds a weighted average from the 3rd Dimension velocity
+%VparArray and finds a weighted average from the 3rd Dimension velocity
 %distribution.
 for i=1:size(edgesXY ,2); %X dimension
     for j=1:size(edgesXY ,2); % Y dimension
         
-        X_dist = reshape( VxArray(i,j,:) , 1 , [] ) ;
-        Y_dist = reshape( VyArray(i,j,:) , 1 , [] ) ;
+        X_dist = reshape( VparArray(i,j,:) , 1 , [] ) ;
+        Y_dist = reshape( VperpArray(i,j,:) , 1 , [] ) ;
         
         %Make Weighted averages.
-        Vx(i,j)= nansum( X_dist.*V ) / nansum( X_dist )  ;
-        Vy(i,j)= nansum( Y_dist.*V ) / nansum( Y_dist )  ;
+        Vpar(i,j)= nansum( X_dist.*V ) / nansum( X_dist )  ;
+        Vperp(i,j)= nansum( Y_dist.*V ) / nansum( Y_dist )  ;
         %Sum of the rod pairs counted at each XY position.
         Counts(i,j)=nansum(X_dist);
         
         
         %EXTENSILE
-        X_dist_E = reshape( VxArray_E(i,j,:) , 1 , [] ) ;
-        Y_dist_E = reshape( VyArray_E(i,j,:) , 1 , [] ) ;
+        X_dist_E = reshape( VparArray_E(i,j,:) , 1 , [] ) ;
+        Y_dist_E = reshape( VperpArray_E(i,j,:) , 1 , [] ) ;
         
         %Make Weighted averages.
-        Vx_E(i,j)= nansum( X_dist_E.*V ) / nansum( X_dist_E )  ;
-        Vy_E(i,j)= nansum( Y_dist_E.*V ) / nansum( Y_dist_E )  ;
+        Vpar_E(i,j)= nansum( X_dist_E.*V ) / nansum( X_dist_E )  ;
+        Vperp_E(i,j)= nansum( Y_dist_E.*V ) / nansum( Y_dist_E )  ;
         %Sum of the rod pairs counted at each XY position.
         Counts_E(i,j)=nansum(X_dist_E);
         
         %CONTRACTILE
-        X_dist_C = reshape( VxArray_C(i,j,:) , 1 , [] ) ;
-        Y_dist_C = reshape( VyArray_C(i,j,:) , 1 , [] ) ;
+        X_dist_C = reshape( VparArray_C(i,j,:) , 1 , [] ) ;
+        Y_dist_C = reshape( VperpArray_C(i,j,:) , 1 , [] ) ;
         
         %Make Weighted averages.
-        Vx_C(i,j)= nansum( X_dist_C.*V ) / nansum( X_dist_C )  ;
-        Vy_C(i,j)= nansum( Y_dist_C.*V ) / nansum( Y_dist_C )  ;
+        Vpar_C(i,j)= nansum( X_dist_C.*V ) / nansum( X_dist_C )  ;
+        Vperp_C(i,j)= nansum( Y_dist_C.*V ) / nansum( Y_dist_C )  ;
         %Sum of the rod pairs counted at each XY position.
         Counts_C(i,j)=nansum(X_dist_C);
         
@@ -247,14 +249,14 @@ disp(strcat('Ratio of Extending MT Pairs is :' , num2str(RatioExtending*100), ' 
 
 %% Convert everything from pixels/frame to um/s
 
-MTsVsTime(:,1)=MTsVsTime(:,1).*timestep;
+MTsVsTime(:,1)=MTsVsTime(:,1).*Timestep;
 
 X= X.*PixCal;
 Y= Y.*PixCal;
-Vx = Vx.*(PixCal/timestep);
-Vy = Vy.*(PixCal/timestep);
-Vx_E = Vx_E.*(PixCal/timestep); Vx_C = Vx_C.*(PixCal/timestep);
-Vy_E = Vy_E.*(PixCal/timestep); Vy_C = Vy_C.*(PixCal/timestep);
+Vpar = Vpar.*(PixCal/Timestep);
+Vperp = Vperp.*(PixCal/Timestep);
+Vpar_E = Vpar_E.*(PixCal/Timestep); Vpar_C = Vpar_C.*(PixCal/Timestep);
+Vperp_E = Vperp_E.*(PixCal/Timestep); Vperp_C = Vperp_C.*(PixCal/Timestep);
 
 
 %%
@@ -268,7 +270,7 @@ pcolor(X,Y,Counts);
 colormap(parula);
 shading interp ;
 hold on
-quiver( X, Y, Vx, Vy ,'AutoScaleFactor',3,'LineWidth',1.5,'color',[1 1 1]) ;
+quiver( X, Y, Vpar, Vperp ,'AutoScaleFactor',3,'LineWidth',1.5,'color',[1 1 1]) ;
 title('Raw Velocity Field + Counts')
 % Create xlabel
 xlabel('Distance, R (um)','FontSize',22);
@@ -285,7 +287,7 @@ pcolor(X,Y,Counts_E);
 colormap(parula);
 shading interp ;
 hold on
-quiver( X, Y, Vx_E, Vy_E ,'AutoScaleFactor',3,'LineWidth',1.5,'color',[1 1 1]) ;
+quiver( X, Y, Vpar_E, Vperp_E ,'AutoScaleFactor',3,'LineWidth',1.5,'color',[1 1 1]) ;
 title('Raw Extensile')
 % Create xlabel
 xlabel('Distance, R (um)','FontSize',22);
@@ -299,7 +301,7 @@ pcolor(X,Y,Counts_C);
 colormap(parula);
 shading interp ;
 hold on
-quiver( X, Y, Vx_C, Vy_C ,'AutoScaleFactor',3,'LineWidth',1.5,'color',[1 1 1]) ;
+quiver( X, Y, Vpar_C, Vperp_C ,'AutoScaleFactor',3,'LineWidth',1.5,'color',[1 1 1]) ;
 title('Raw Contractile')
 % Create xlabel
 xlabel('Distance, R (um)','FontSize',22);
@@ -316,125 +318,125 @@ set(gca,'FontSize',16)
 %quad 1
 q1_X =   X( pos:XYend, pos:XYend);
 q1_Y =   Y( pos:XYend, pos:XYend);
-q1_Vx = Vx( pos:XYend, pos:XYend);
-q1_Vy = Vy( pos:XYend, pos:XYend);
+q1_Vpar = Vpar( pos:XYend, pos:XYend);
+q1_Vperp = Vperp( pos:XYend, pos:XYend);
 q1_C=Counts( pos:XYend, pos:XYend);
 
 %quad 2
 
-% q2_Vx =  flipud( Vx( 1:neg, pos:XYend) .* -1)  ;
-% q2_Vy =  flipud( Vy( 1:neg, pos:XYend));
+% q2_Vpar =  flipud( Vpar( 1:neg, pos:XYend) .* -1)  ;
+% q2_Vperp =  flipud( Vperp( 1:neg, pos:XYend));
 % q2_C=    flipud(Counts( 1:neg, pos:XYend));
-q2_Vx =  flipud( Vx( rmax:neg, pos:XYend) .* -1)  ;
-q2_Vy =  flipud( Vy( rmax:neg, pos:XYend));
+q2_Vpar =  flipud( Vpar( rmax:neg, pos:XYend) .* -1)  ;
+q2_Vperp =  flipud( Vperp( rmax:neg, pos:XYend));
 q2_C=    flipud(Counts( rmax:neg, pos:XYend));
 %quad 3
 
-% q3_Vx = rot90( Vx( 1:neg, 1:neg)  .* -1 ,2) ;
-% q3_Vy = rot90( Vy( 1:neg, 1:neg)  .* -1 ,2) ;
+% q3_Vpar = rot90( Vpar( 1:neg, 1:neg)  .* -1 ,2) ;
+% q3_Vperp = rot90( Vperp( 1:neg, 1:neg)  .* -1 ,2) ;
 % q3_C=   rot90( Counts( 1:neg, 1:neg) ,2);
-q3_Vx = rot90( Vx( rmax:neg, rmax:neg)  .* -1 ,2) ;
-q3_Vy = rot90( Vy( rmax:neg, rmax:neg)  .* -1 ,2) ;
+q3_Vpar = rot90( Vpar( rmax:neg, rmax:neg)  .* -1 ,2) ;
+q3_Vperp = rot90( Vperp( rmax:neg, rmax:neg)  .* -1 ,2) ;
 q3_C=   rot90( Counts( rmax:neg, rmax:neg) ,2);
 %quad 4
 
-% q4_Vx = fliplr( Vx( pos:XYend, 1:neg) );
-% q4_Vy = fliplr( Vy( pos:XYend, 1:neg)  .* -1) ;
+% q4_Vpar = fliplr( Vpar( pos:XYend, 1:neg) );
+% q4_Vperp = fliplr( Vperp( pos:XYend, 1:neg)  .* -1) ;
 % q4_C=   fliplr(Counts( pos:XYend, 1:neg) );
-q4_Vx = fliplr( Vx( pos:XYend, rmax:neg) );
-q4_Vy = fliplr( Vy( pos:XYend, rmax:neg)  .* -1) ;
+q4_Vpar = fliplr( Vpar( pos:XYend, rmax:neg) );
+q4_Vperp = fliplr( Vperp( pos:XYend, rmax:neg)  .* -1) ;
 q4_C=   fliplr(Counts( pos:XYend, rmax:neg) );
 %Weighted average of quadrants all in mirrored and folded into Quad1:
 q1_netC = ( q1_C + q2_C + q3_C + q4_C ) ;
-q1_netVx =  ( q1_Vx.*q1_C  + q2_Vx.*q2_C + q3_Vx.*q3_C + q4_Vx.*q4_C ) ./ q1_netC ;
-q1_netVy =  ( q1_Vy.*q1_C  + q2_Vy.*q2_C + q3_Vy.*q3_C + q4_Vy.*q4_C ) ./ q1_netC ;
+q1_netVpar =  ( q1_Vpar.*q1_C  + q2_Vpar.*q2_C + q3_Vpar.*q3_C + q4_Vpar.*q4_C ) ./ q1_netC ;
+q1_netVperp =  ( q1_Vperp.*q1_C  + q2_Vperp.*q2_C + q3_Vperp.*q3_C + q4_Vperp.*q4_C ) ./ q1_netC ;
 
 
 %% Average the EXTENSILE data into the 1st quadrant.
 %quad 1
 q1_X_E =   X( pos:XYend, pos:XYend);
 q1_Y_E =   Y( pos:XYend, pos:XYend);
-q1_Vx_E = Vx_E( pos:XYend, pos:XYend);
-q1_Vy_E = Vy_E( pos:XYend, pos:XYend);
+q1_Vpar_E = Vpar_E( pos:XYend, pos:XYend);
+q1_Vperp_E = Vperp_E( pos:XYend, pos:XYend);
 q1_C_E=Counts_E( pos:XYend, pos:XYend);
 %quad 2
 
-% q2_Vx_E =  flipud( Vx_E( 1:neg, pos:XYend) .* -1)  ;
-% q2_Vy_E =  flipud( Vy_E( 1:neg, pos:XYend));
+% q2_Vpar_E =  flipud( Vpar_E( 1:neg, pos:XYend) .* -1)  ;
+% q2_Vperp_E =  flipud( Vperp_E( 1:neg, pos:XYend));
 % q2_C_E=    flipud(Counts_E( 1:neg, pos:XYend));
-q2_Vx_E =  flipud( Vx_E( rmax:neg, pos:XYend) .* -1)  ;
-q2_Vy_E =  flipud( Vy_E( rmax:neg, pos:XYend));
+q2_Vpar_E =  flipud( Vpar_E( rmax:neg, pos:XYend) .* -1)  ;
+q2_Vperp_E =  flipud( Vperp_E( rmax:neg, pos:XYend));
 q2_C_E=    flipud(Counts_E( rmax:neg, pos:XYend));
 %quad 3
 %flip X & Y velocities
 
-% q3_Vx_E = rot90( Vx_E( 1:neg, 1:neg)  .* -1 ,2) ;
-% q3_Vy_E = rot90( Vy_E( 1:neg, 1:neg)  .* -1 ,2) ;
+% q3_Vpar_E = rot90( Vpar_E( 1:neg, 1:neg)  .* -1 ,2) ;
+% q3_Vperp_E = rot90( Vperp_E( 1:neg, 1:neg)  .* -1 ,2) ;
 % q3_C_E=   rot90( Counts_E( 1:neg, 1:neg) ,2);
 
-q3_Vx_E = rot90( Vx_E( rmax:neg, rmax:neg)  .* -1 ,2) ;
-q3_Vy_E = rot90( Vy_E( rmax:neg, rmax:neg)  .* -1 ,2) ;
+q3_Vpar_E = rot90( Vpar_E( rmax:neg, rmax:neg)  .* -1 ,2) ;
+q3_Vperp_E = rot90( Vperp_E( rmax:neg, rmax:neg)  .* -1 ,2) ;
 q3_C_E=   rot90( Counts_E( rmax:neg, rmax:neg) ,2);
 %quad 4
 %flip Y velocities.
 
-% q4_Vx_E = fliplr( Vx_E( pos:XYend, 1:neg) );
-% q4_Vy_E = fliplr( Vy_E( pos:XYend, 1:neg)  .* -1) ;
+% q4_Vpar_E = fliplr( Vpar_E( pos:XYend, 1:neg) );
+% q4_Vperp_E = fliplr( Vperp_E( pos:XYend, 1:neg)  .* -1) ;
 % q4_C_E=   fliplr(Counts_E( pos:XYend, 1:neg) );
-q4_Vx_E = fliplr( Vx_E( pos:XYend, rmax:neg) );
-q4_Vy_E = fliplr( Vy_E( pos:XYend, rmax:neg)  .* -1) ;
+q4_Vpar_E = fliplr( Vpar_E( pos:XYend, rmax:neg) );
+q4_Vperp_E = fliplr( Vperp_E( pos:XYend, rmax:neg)  .* -1) ;
 q4_C_E=   fliplr(Counts_E( pos:XYend, rmax:neg) );
 %Weighted average of quadrents all in mirrored and folded into Quad1:
 q1_netC_E = ( q1_C_E + q2_C_E + q3_C_E + q4_C_E ) ;
-q1_netVx_E =  ( q1_Vx_E.*q1_C_E  + q2_Vx_E.*q2_C_E + q3_Vx_E.*q3_C_E + q4_Vx_E.*q4_C_E ) ./ q1_netC_E ;
-q1_netVy_E =  ( q1_Vy_E.*q1_C_E  + q2_Vy_E.*q2_C_E + q3_Vy_E.*q3_C_E + q4_Vy_E.*q4_C_E ) ./ q1_netC_E ;
+q1_netVpar_E =  ( q1_Vpar_E.*q1_C_E  + q2_Vpar_E.*q2_C_E + q3_Vpar_E.*q3_C_E + q4_Vpar_E.*q4_C_E ) ./ q1_netC_E ;
+q1_netVperp_E =  ( q1_Vperp_E.*q1_C_E  + q2_Vperp_E.*q2_C_E + q3_Vperp_E.*q3_C_E + q4_Vperp_E.*q4_C_E ) ./ q1_netC_E ;
 
 
 %% Average the Contractile data into the 1st quadrant.
 %quad 1
 q1_X_C =   X( pos:XYend, pos:XYend);
 q1_Y_C =   Y( pos:XYend, pos:XYend);
-q1_Vx_C = Vx_C( pos:XYend, pos:XYend);
-q1_Vy_C = Vy_C( pos:XYend, pos:XYend);
+q1_Vpar_C = Vpar_C( pos:XYend, pos:XYend);
+q1_Vperp_C = Vperp_C( pos:XYend, pos:XYend);
 q1_C_C=Counts_C( pos:XYend, pos:XYend);
 %quad 2
 %flip X velocities.
 
-% q2_Vx_C =  flipud( Vx_C( 1:neg, pos:XYend) .* -1)  ;
-% q2_Vy_C =  flipud( Vy_C( 1:neg, pos:XYend));
+% q2_Vpar_C =  flipud( Vpar_C( 1:neg, pos:XYend) .* -1)  ;
+% q2_Vperp_C =  flipud( Vperp_C( 1:neg, pos:XYend));
 % q2_C_C=    flipud(Counts_C( 1:neg, pos:XYend));
-q2_Vx_C =  flipud( Vx_C( rmax:neg, pos:XYend) .* -1)  ;
-q2_Vy_C =  flipud( Vy_C( rmax:neg, pos:XYend));
+q2_Vpar_C =  flipud( Vpar_C( rmax:neg, pos:XYend) .* -1)  ;
+q2_Vperp_C =  flipud( Vperp_C( rmax:neg, pos:XYend));
 q2_C_C=    flipud(Counts_C( rmax:neg, pos:XYend));
 %quad 3
 %flip X & Y velocities
 
-% q3_Vx_C = rot90( Vx_C( 1:neg, 1:neg)  .* -1 ,2) ;
-% q3_Vy_C = rot90( Vy_C( 1:neg, 1:neg)  .* -1 ,2) ;
+% q3_Vpar_C = rot90( Vpar_C( 1:neg, 1:neg)  .* -1 ,2) ;
+% q3_Vperp_C = rot90( Vperp_C( 1:neg, 1:neg)  .* -1 ,2) ;
 % q3_C_C=   rot90( Counts_C( 1:neg, 1:neg) ,2);
-q3_Vx_C = rot90( Vx_C( rmax:neg, rmax:neg)  .* -1 ,2) ;
-q3_Vy_C = rot90( Vy_C( rmax:neg, rmax:neg)  .* -1 ,2) ;
+q3_Vpar_C = rot90( Vpar_C( rmax:neg, rmax:neg)  .* -1 ,2) ;
+q3_Vperp_C = rot90( Vperp_C( rmax:neg, rmax:neg)  .* -1 ,2) ;
 q3_C_C=   rot90( Counts_C( rmax:neg, rmax:neg) ,2);
 %quad 4
 %flip Y velocities.
 
-% q4_Vx_C = fliplr( Vx_C( pos:XYend, 1:neg) );
-% q4_Vy_C = fliplr( Vy_C( pos:XYend, 1:neg)  .* -1) ;
+% q4_Vpar_C = fliplr( Vpar_C( pos:XYend, 1:neg) );
+% q4_Vperp_C = fliplr( Vperp_C( pos:XYend, 1:neg)  .* -1) ;
 % q4_C_C=   fliplr(Counts_C( pos:XYend, 1:neg) );
-q4_Vx_C = fliplr( Vx_C( pos:XYend, rmax:neg) );
-q4_Vy_C = fliplr( Vy_C( pos:XYend, rmax:neg)  .* -1) ;
+q4_Vpar_C = fliplr( Vpar_C( pos:XYend, rmax:neg) );
+q4_Vperp_C = fliplr( Vperp_C( pos:XYend, rmax:neg)  .* -1) ;
 q4_C_C=   fliplr(Counts_C( pos:XYend, rmax:neg) );
 
 %Weighted average of quadrants all in mirrored and folded into Quad1:
 q1_netC_C = ( q1_C_C + q2_C_C + q3_C_C + q4_C_C ) ;
-q1_netVx_C =  ( q1_Vx_C.*q1_C_C  + q2_Vx_C.*q2_C_C + q3_Vx_C.*q3_C_C + q4_Vx_C.*q4_C_C ) ./ q1_netC_C ;
-q1_netVy_C =  ( q1_Vy_C.*q1_C_C  + q2_Vy_C.*q2_C_C + q3_Vy_C.*q3_C_C + q4_Vy_C.*q4_C_C ) ./ q1_netC_C ;
+q1_netVpar_C =  ( q1_Vpar_C.*q1_C_C  + q2_Vpar_C.*q2_C_C + q3_Vpar_C.*q3_C_C + q4_Vpar_C.*q4_C_C ) ./ q1_netC_C ;
+q1_netVperp_C =  ( q1_Vperp_C.*q1_C_C  + q2_Vperp_C.*q2_C_C + q3_Vperp_C.*q3_C_C + q4_Vperp_C.*q4_C_C ) ./ q1_netC_C ;
 
 
 %% Plot the averaged flow field in Quadrant 1.
 
 figure3 = figure('Color',[1 1 1]);
-quiver( q1_X, q1_Y, q1_netVx, q1_netVy, 2)
+quiver( q1_X, q1_Y, q1_netVpar, q1_netVperp, 2)
 title('Averaged Velocity Field - 1st Quadrant')
 % Create xlabel
 xlabel('Distance, R (um)','FontSize',22);
@@ -445,7 +447,7 @@ set(gca,'FontSize',16)
 figure4 = figure('Color',[1 1 1]);
 
 subplot(1,2,1)
-quiver( q1_X, q1_Y, q1_netVx_E, q1_netVy_E, 2)
+quiver( q1_X, q1_Y, q1_netVpar_E, q1_netVperp_E, 2)
 title('Quad 1 - Extensile')
 % Create xlabel
 xlabel('Distance, R (um)','FontSize',22);
@@ -455,7 +457,7 @@ colorbar
 set(gca,'FontSize',16)
 
 subplot(1,2,2)
-quiver( q1_X, q1_Y, q1_netVx_C, q1_netVy_C, 2)
+quiver( q1_X, q1_Y, q1_netVpar_C, q1_netVperp_C, 2)
 title('Quad 1 - Contractile')
 % Create xlabel
 xlabel('Distance, R (um)','FontSize',22);
@@ -471,28 +473,28 @@ set(gca,'FontSize',16)
 
 %NET
 par_X = q1_X(:,1);
-par_Vx = q1_netVx(:,1);
+par_Vpar = q1_netVpar(:,1);
 perp_Y = q1_Y(1,:);
-perp_Vy = q1_netVy(1,:);
+perp_Vperp = q1_netVperp(1,:);
 
 %EXTENSILE
 par_X_E = q1_X_E(:,1);
-par_Vx_E = q1_netVx_E(:,1);
+par_Vpar_E = q1_netVpar_E(:,1);
 perp_Y_E = q1_Y_E(1,:);
-perp_Vy_E = q1_netVy_E(1,:);
+perp_Vperp_E = q1_netVperp_E(1,:);
 %CONTRACTILE
 par_X_C = q1_X_C(:,1);
-par_Vx_C = q1_netVx_C(:,1);
+par_Vpar_C = q1_netVpar_C(:,1);
 perp_Y_C = q1_Y_C(1,:);
-perp_Vy_C = q1_netVy_C(1,:);
+perp_Vperp_C = q1_netVperp_C(1,:);
 
 
 figure5 = figure('Color',[1 1 1]);
 hold on
-plot(par_X, par_Vx,'linewidth',3)
-plot(perp_Y, perp_Vy,'linewidth',2)
-plot(par_X_E, par_Vx_E,'linewidth',2)
-plot(par_X_C, par_Vx_C,'linewidth',2)
+plot(par_X, par_Vpar,'linewidth',3)
+plot(perp_Y, perp_Vperp,'linewidth',2)
+plot(par_X_E, par_Vpar_E,'linewidth',2)
+plot(par_X_C, par_Vpar_C,'linewidth',2)
 hold off
 % Create xlabel
 xlabel('Distance, R (um)','FontSize',22);
@@ -504,10 +506,10 @@ set(gca,'FontSize',16)
 
 figure6 = figure('Color',[1 1 1]);
 hold on
-plot(par_X, par_Vx,'linewidth',3)
-plot(perp_Y, perp_Vy,'linewidth',2)
-plot(perp_Y_E, perp_Vy_E,'linewidth',2)
-plot(perp_Y_C, perp_Vy_C,'linewidth',2)
+plot(par_X, par_Vpar,'linewidth',3)
+plot(perp_Y, perp_Vperp,'linewidth',2)
+plot(perp_Y_E, perp_Vperp_E,'linewidth',2)
+plot(perp_Y_C, perp_Vperp_C,'linewidth',2)
 hold off
 % Create xlabel
 xlabel('Distance, R (um)','FontSize',22);
@@ -527,8 +529,8 @@ full_X = [rot90(q1_X ,2).*-1 , flipud(q1_X).*-1 ; fliplr(q1_X) , q1_X ];
 full_Y = [rot90(q1_Y ,2).*-1 , flipud(q1_Y) ; fliplr(q1_Y).*-1 , q1_Y ];
 full_C = [rot90(q1_netC ,2) , flipud(q1_netC) ; fliplr(q1_netC) , q1_netC ]; 
 %flip the X and Y velocities where appropriate for the mirror
-full_Vx = [rot90(q1_netVx ,2).*-1 , flipud(q1_netVx).*-1 ; fliplr(q1_netVx) , q1_netVx ]; 
-full_Vy = [rot90(q1_netVy ,2).*-1 , flipud(q1_netVy) ; fliplr(q1_netVy).*-1 , q1_netVy ];
+full_Vpar = [rot90(q1_netVpar ,2).*-1 , flipud(q1_netVpar).*-1 ; fliplr(q1_netVpar) , q1_netVpar ]; 
+full_Vperp = [rot90(q1_netVperp ,2).*-1 , flipud(q1_netVperp) ; fliplr(q1_netVperp).*-1 , q1_netVperp ];
 
 figure6 = figure('Color',[1 1 1]);
 % pcolor(full_X,full_Y,full_C);
@@ -536,7 +538,7 @@ figure6 = figure('Color',[1 1 1]);
 % shading interp ;
 % colorbar
 hold on
-quiver( full_X, full_Y, full_Vx , full_Vy, 'AutoScaleFactor',2,'LineWidth',1.5,'color',[0 0 0])
+quiver( full_X, full_Y, full_Vpar , full_Vperp, 'AutoScaleFactor',2,'LineWidth',1.5,'color',[0 0 0])
 % Create xlabel
 xlabel('Distance, R (pixels)','FontSize',22);
 % Create ylabel
@@ -549,8 +551,8 @@ full_X_E = [rot90(q1_X_E ,2).*-1 , flipud(q1_X_E).*-1 ; fliplr(q1_X_E) , q1_X_E 
 full_Y_E = [rot90(q1_Y_E ,2).*-1 , flipud(q1_Y_E) ; fliplr(q1_Y_E).*-1 , q1_Y_E ];
 full_C_E = [rot90(q1_netC_E ,2) , flipud(q1_netC_E) ; fliplr(q1_netC_E) , q1_netC_E ]; 
 %flip the X and Y velocities where appropriate for the mirror
-full_Vx_E = [rot90(q1_netVx_E ,2).*-1 , flipud(q1_netVx_E).*-1 ; fliplr(q1_netVx_E) , q1_netVx_E ]; 
-full_Vy_E = [rot90(q1_netVy_E ,2).*-1 , flipud(q1_netVy_E) ; fliplr(q1_netVy_E).*-1 , q1_netVy_E ];
+full_Vpar_E = [rot90(q1_netVpar_E ,2).*-1 , flipud(q1_netVpar_E).*-1 ; fliplr(q1_netVpar_E) , q1_netVpar_E ]; 
+full_Vperp_E = [rot90(q1_netVperp_E ,2).*-1 , flipud(q1_netVperp_E) ; fliplr(q1_netVperp_E).*-1 , q1_netVperp_E ];
 
 figure7 = figure('Color',[1 1 1]);
 % pcolor(full_X,full_Y,full_C);
@@ -558,7 +560,7 @@ figure7 = figure('Color',[1 1 1]);
 % shading interp ;
 % colorbar
 hold on
-quiver( full_X_E, full_Y_E, full_Vx_E , full_Vy_E, 'AutoScaleFactor',2,'LineWidth',1.5,'color',[0 0 0])
+quiver( full_X_E, full_Y_E, full_Vpar_E , full_Vperp_E, 'AutoScaleFactor',2,'LineWidth',1.5,'color',[0 0 0])
 % Create xlabel
 xlabel('Distance, R (pixels)','FontSize',22);
 % Create ylabel
@@ -571,8 +573,8 @@ full_X_C = [rot90(q1_X_C ,2).*-1 , flipud(q1_X_C).*-1 ; fliplr(q1_X_C) , q1_X_C 
 full_Y_C = [rot90(q1_Y_C ,2).*-1 , flipud(q1_Y_C) ; fliplr(q1_Y_C).*-1 , q1_Y_C ];
 full_C_C = [rot90(q1_netC_C ,2) , flipud(q1_netC_C) ; fliplr(q1_netC_C) , q1_netC_C ]; 
 %flip the X and Y velocities where appropriate for the mirror
-full_Vx_C = [rot90(q1_netVx_C ,2).*-1 , flipud(q1_netVx_C).*-1 ; fliplr(q1_netVx_C) , q1_netVx_C ]; 
-full_Vy_C = [rot90(q1_netVy_C ,2).*-1 , flipud(q1_netVy_C) ; fliplr(q1_netVy_C).*-1 , q1_netVy_C ];
+full_Vpar_C = [rot90(q1_netVpar_C ,2).*-1 , flipud(q1_netVpar_C).*-1 ; fliplr(q1_netVpar_C) , q1_netVpar_C ]; 
+full_Vperp_C = [rot90(q1_netVperp_C ,2).*-1 , flipud(q1_netVperp_C) ; fliplr(q1_netVperp_C).*-1 , q1_netVperp_C ];
 
 figure8 = figure('Color',[1 1 1]);
 % pcolor(full_X,full_Y,full_C);
@@ -580,7 +582,7 @@ figure8 = figure('Color',[1 1 1]);
 % shading interp ;
 % colorbar
 hold on
-quiver( full_X_C, full_Y_C, full_Vx_C , full_Vy_C, 'AutoScaleFactor',2,'LineWidth',1.5,'color',[0 0 0])
+quiver( full_X_C, full_Y_C, full_Vpar_C , full_Vperp_C, 'AutoScaleFactor',2,'LineWidth',1.5,'color',[0 0 0])
 % Create xlabel
 xlabel('Distance, R (pixels)','FontSize',22);
 % Create ylabel
@@ -596,16 +598,16 @@ set(gca,'FontSize',16)
 
 [cleanX,cleanY] = meshgrid( [ -1.*fliplr([ InterpStep: InterpStep: MaxInterpDimension ]) , 0 , InterpStep: InterpStep: MaxInterpDimension] );
 
-cleanVx = griddata(full_X ,full_Y,full_Vx,cleanX,cleanY,'cubic');
-cleanVy = griddata(full_X ,full_Y,full_Vy,cleanX,cleanY,'cubic');
+cleanVpar = griddata(full_X ,full_Y,full_Vpar,cleanX,cleanY,'cubic');
+cleanVperp = griddata(full_X ,full_Y,full_Vperp,cleanX,cleanY,'cubic');
 
 figure7 = figure('Color',[1 1 1]);
-Speed=sqrt(cleanVx.^2 + cleanVy.^2);
+Speed=sqrt(cleanVpar.^2 + cleanVperp.^2);
 pcolor(cleanX, cleanY, Speed)
 colormap(jet)
 shading interp
 hold on
-quiver(cleanX,cleanY,cleanVx,cleanVy,'AutoScaleFactor',1,'LineWidth',2,'color',[0 0 0])
+quiver(cleanX,cleanY,cleanVpar,cleanVperp,'AutoScaleFactor',1,'LineWidth',2,'color',[0 0 0])
 colorbar
 % Create xlabel
 xlabel('Parallel Flow Axis (um)','FontSize',22);
@@ -618,16 +620,16 @@ set(gca,'FontSize',16)
 %extensile
 %[cleanX,cleanY] = meshgrid( [ -1.*fliplr([ InterpStep: InterpStep: MaxInterpDimension ]) , 0 , InterpStep: InterpStep: MaxInterpDimension] );
 
-cleanVx_E = griddata(full_X_E ,full_Y_E,full_Vx_E,cleanX,cleanY,'cubic');
-cleanVy_E = griddata(full_X_E ,full_Y_E,full_Vy_E,cleanX,cleanY,'cubic');
+cleanVpar_E = griddata(full_X_E ,full_Y_E,full_Vpar_E,cleanX,cleanY,'cubic');
+cleanVperp_E = griddata(full_X_E ,full_Y_E,full_Vperp_E,cleanX,cleanY,'cubic');
 
 figure7 = figure('Color',[1 1 1]);
-Speed=sqrt(cleanVx_E.^2 + cleanVy_E.^2);
+Speed=sqrt(cleanVpar_E.^2 + cleanVperp_E.^2);
 pcolor(cleanX, cleanY, Speed)
 colormap(jet)
 shading interp
 hold on
-quiver(cleanX,cleanY,cleanVx_E,cleanVy_E,'AutoScaleFactor',1,'LineWidth',2,'color',[0 0 0])
+quiver(cleanX,cleanY,cleanVpar_E,cleanVperp_E,'AutoScaleFactor',1,'LineWidth',2,'color',[0 0 0])
 colorbar
 % Create xlabel
 xlabel('Parallel Flow Axis (um)','FontSize',22);
@@ -639,16 +641,16 @@ set(gca,'FontSize',16)
 %contractile
 %[cleanX,cleanY] = meshgrid( [ -1.*fliplr([ InterpStep: InterpStep: MaxInterpDimension ]) , 0 , InterpStep: InterpStep: MaxInterpDimension] );
 
-cleanVx_C = griddata(full_X_C ,full_Y_C,full_Vx_C,cleanX,cleanY,'cubic');
-cleanVy_C = griddata(full_X_C ,full_Y_C,full_Vy_C,cleanX,cleanY,'cubic');
+cleanVpar_C = griddata(full_X_C ,full_Y_C,full_Vpar_C,cleanX,cleanY,'cubic');
+cleanVperp_C = griddata(full_X_C ,full_Y_C,full_Vperp_C,cleanX,cleanY,'cubic');
 
 figure7 = figure('Color',[1 1 1]);
-Speed=sqrt(cleanVx_C.^2 + cleanVy_C.^2);
+Speed=sqrt(cleanVpar_C.^2 + cleanVperp_C.^2);
 pcolor(cleanX, cleanY, Speed)
 colormap(jet)
 shading interp
 hold on
-quiver(cleanX,cleanY,cleanVx_C,cleanVy_C,'AutoScaleFactor',1,'LineWidth',2,'color',[0 0 0])
+quiver(cleanX,cleanY,cleanVpar_C,cleanVperp_C,'AutoScaleFactor',1,'LineWidth',2,'color',[0 0 0])
 colorbar
 % Create xlabel
 xlabel('Parallel Flow Axis (um)','FontSize',22);
@@ -664,15 +666,15 @@ set(gca,'FontSize',16)
 center = ceil(size(cleanX,1)/2);
 
 par_X_interp = cleanX( center , center:size(cleanX,2) );
-par_Vx_interp = cleanVx( center , center:size(cleanX,2) );
+par_Vpar_interp = cleanVpar( center , center:size(cleanX,2) );
 
 perp_Y_interp = cleanY( center:size(cleanY,1),  center);
-perp_Vy_interp = cleanVy( center:size(cleanY,1), center );
+perp_Vperp_interp = cleanVperp( center:size(cleanY,1), center );
 
 % figure8 = figure('Color',[1 1 1]);
-% plot(par_X_interp, par_Vx_interp,'linewidth',3)
+% plot(par_X_interp, par_Vpar_interp,'linewidth',3)
 % hold on
-% plot(perp_Y_interp, perp_Vy_interp,'linewidth',2)
+% plot(perp_Y_interp, perp_Vperp_interp,'linewidth',2)
 % hold off
 % % Create xlabel
 % xlabel('Distance, R (um)','FontSize',22);
@@ -702,22 +704,22 @@ rhoFlux=repmat(rhoFlux,1,size(thetaFlux,2));
 [XFlux,YFlux] = pol2cart(thetaFlux,rhoFlux);
 
 %Interpolate the averaged and folded data onto the new fine grid.
-VxFlux=griddata(full_X,full_Y,full_Vx,XFlux,YFlux);
-VyFlux=griddata(full_X,full_Y,full_Vy,XFlux,YFlux);
+VparFlux=griddata(full_X,full_Y,full_Vpar,XFlux,YFlux);
+VperpFlux=griddata(full_X,full_Y,full_Vperp,XFlux,YFlux);
 
 %calcuated the Flux (sum of the radial components of a circle at various rho).
-PostFlux=[]; NormalVx2=[];
+PostFlux=[]; NormalVpar2=[];
 for blah=1:size(rhoFlux,1);
-    NormalVx2 = VxFlux(blah,:).*cos(thetaFlux(1,:)) - VyFlux(blah,:).*sin(thetaFlux(1,:)) ;
-    %NormalVy1 = meanVx(blah,:)'.*sin(theta(:,1)) + meanVy(blah,:)'.*cos(theta(:,1)) ;
+    NormalVpar2 = VparFlux(blah,:).*cos(thetaFlux(1,:)) - VperpFlux(blah,:).*sin(thetaFlux(1,:)) ;
+    %NormalVperp1 = meanVpar(blah,:)'.*sin(theta(:,1)) + meanVperp(blah,:)'.*cos(theta(:,1)) ;
     
     %This is the sum of the velocities perpendicular (radial) to the tangent of a
     %test circle at varying distance rho. In units of um/s /area.
-    PostFlux(blah,1:2)= [ rhoFlux(blah,1) nansum(NormalVx2) ];
+    PostFlux(blah,1:2)= [ rhoFlux(blah,1) nansum(NormalVpar2) ];
 end
 
 %Test the flow field is ok.
-%quiver( XFlux,YFlux,VxFlux, VyFlux,2)
+%quiver( XFlux,YFlux,VparFlux, VperpFlux,2)
 
 figure9 = figure('Color',[1 1 1]);
 plot(PostFlux(:,1),PostFlux(:,2),'LineWidth',3)
@@ -738,7 +740,7 @@ figure10 = figure('Color',[1 1 1]);
 subplot(1,2,1)
 plot( MTsVsTime(:,1), MTsVsTime(:,2),'LineWidth',2)
 % Create xlabel
-xlabel('time (s)','FontSize',22);
+xlabel('Time (s)','FontSize',22);
 % Create ylabel
 ylabel('# MT pairs tracked','FontSize',22);
 title('#MTs tracked vs Time');
@@ -749,7 +751,7 @@ subplot(1,2,2)
 plot( RatioVsTime(:,1), RatioVsTime(:,2),'LineWidth',2)
 ylim([0 1])
 % Create xlabel
-xlabel('time (s)','FontSize',22);
+xlabel('Time (s)','FontSize',22);
 % Create ylabel
 ylabel('Ratio of Extensile vs Contractile','FontSize',22);
 title('Extensile Ratio');
@@ -764,7 +766,7 @@ save(savename2);
 % ATPs1 = [1, 2.5, 5, 10, 18, 25, 50, 75, 100, 150, 250, 500, 750, 1000, 1500, 2000];
 % ATPs2 = [1,10,100,2,20,200,3,30,300,4,40,400,5,50,500,6];
 % m=find(ATPs1==ATP);
-% savename3=strcat('G:\Linnea\FilamentSliding_ATP_Data\new_batch\CalcRelVel2\Vx','Analysis_',num2str(ATPs2(m)));%location and format for plotting multiple ATPs
+% savename3=strcat('G:\Linnea\FilamentSliding_ATP_Data\new_batch\CalcRelVel2\Vpar','Analysis_',num2str(ATPs2(m)));%location and format for plotting multiple ATPs
 % save(savename3);
 % clc; 
 % clc; 
