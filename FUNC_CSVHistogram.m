@@ -43,8 +43,8 @@ if nargin == 2
         sumN = updatedN + currN;
         %Count number of unbinned data and add tally to outlierNum
         outlierNum = outlierNum + (numel(currFieldVals) - sum(currN));
-        if outlierNum + (numel(currFieldVals) - sum(currN)) ~= 0
-        end
+%         if outlierNum + (numel(currFieldVals) - sum(currN)) ~= 0
+%         end
     end
 %See Line 10: Check to see if custom edges have been passed or not
     %Bin all data within desired edges and count number of outliers

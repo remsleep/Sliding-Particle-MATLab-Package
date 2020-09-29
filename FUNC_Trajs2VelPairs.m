@@ -40,7 +40,7 @@ fileID= fopen(savename, 'w');
 %Output this:  [Rsep RelAngle DeltaA DeltaS DeltaVpar DeltaVperp Vpara Vperp];
 fprintf(fileID,...
     '%12s, %12s, %12s, %12s, %12s, %12s, %12s, %12s , %12s, %12s \n',...
-    'Rsep', 'RelAngle', 'DeltaA', 'Vpar', 'Vperp', 'Time', 'Ch1', 'Ch2', 'ParSep', 'PerpSep');
+    'Rsep', 'RelAngle', 'DeltaA', 'Vpar', 'Vperp', 'Time', 'ParSep', 'PerpSep', 'Ch1', 'Ch2');
 fclose(fileID);
 
 %Save every X frames.
@@ -196,7 +196,7 @@ for currFrame=1:endFrame
         ch1 = Data1(Ind1(:,1),6); ch2 = Data1(Ind1(:,2),6);
         
         % Concatenate data into a local variable to save
-        rawdata = [rawdata ; Rsep RelAngle DeltaA Vpar Vperp time ch1 ch2 ParSep PerpSep];
+        rawdata = [rawdata ; Rsep RelAngle DeltaA Vpar Vperp time ParSep PerpSep ch1 ch2];
         
         
     end
@@ -204,7 +204,7 @@ for currFrame=1:endFrame
     %Save the data every X iterations to a csv file.
     if mod(currFrame,DumpEvery)==0
         %Convert units from pixels and frames to um and seconds
-        rawdata(:,[1 4 5]) = rawdata(:,[1 4 5]) * pixelConv;
+        rawdata(:,[1 4 5 7 8]) = rawdata(:,[1 4 5 7 8]) * pixelConv;
         rawdata(:,4:5) = rawdata(:,4:5) / timeConv;
         rawdata(:,6) = rawdata(:,6) * timeConv;
         %Save data
@@ -213,7 +213,7 @@ for currFrame=1:endFrame
         rawdata=[];
     elseif currFrame==endFrame
         %Convert units from pixels and frames to um and seconds
-        rawdata(:,[1 4 5]) = rawdata(:,[1 4 5]) * pixelConv;
+        rawdata(:,[1 4 5 7 8]) = rawdata(:,[1 4 5 7 8]) * pixelConv;
         rawdata(:,4:5) = rawdata(:,4:5) / timeConv;
         rawdata(:,6) = rawdata(:,6) * timeConv;
         %Save data
