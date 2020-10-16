@@ -1,6 +1,6 @@
 %% Define variables and parameters
 csvName = 'CombinedData';
-combinedDir = 'C:\Users\Jude\Downloads';
+combinedDir = 'C:\Users\Jude\Documents\SlidingMTData';
 dt = 1;
 pixelConv = .101;
 timeConv = 1.29;
@@ -105,24 +105,39 @@ mkdir(combinedDir);
 save(fullfile(combinedDir, 'tracks.mat'), 'tracks');
 
 %% Find velocity pairs from trajectories
-FUNC_Trajs2VelPairs(combinedDir,combinedDir,[csvName 'read_unscaled'],dt,1,1);
+FUNC_Trajs2VelPairs(combinedDir,combinedDir,[csvName '_Unscaled'],dt,1,1);
 JudeData = FUNC_Trajs2VelPairs(combinedDir,combinedDir,csvName,dt,pixelConv,timeConv);
-
-%% Region Analysis
-MTPairData = [JudeData(:,4)'; JudeData(:,5)'; JudeData(:,1)'; JudeData(:,9:10)'];
-MTPairData = MTPairData(:,mod(JudeData(:,7)' + JudeData(:,8)',2) == 1);%to filter through pairs 
-%from certain channel combinations
-QuadrantOption = 2;%%select 1 for one quadrant and 2 for all four quadrants
-regionDimensions = [0,100,0,100];%%[xlow,xhigh,ylow,yhigh]
-[percentMTs,RegParVels,RegPerpVels,RegCoords] = ...%Reg stands for region
-    FUNC_FindMTsInRegion(regionDimensions,QuadrantOption,MTPairData);
-%%plot histogram of relative parallel velocities
+%% switch signs of velocities
+JUDE_SwitchVelocitySign(combinedDir,combinedDir,csvName,[csvName '_SignSwitched']);
+%% Filtering Through Data based on Angle, Separation, and Channel Nums
+%parameters for filtering through data
+parLow = 0;
+parHigh = 0.2;
+perpLow = 0;
+perpHigh = 10;
+angleCutOff = deg2rad(10);
+filtCSVName = [csvName '_Filtered'];
+%filter angles
+FUNC_FilterCSVIncl(combinedDir,combinedDir,csvName,filtCSVName,{'RelAngle'},[0,angleCutOff]);
+%filter through par seps
+FUNC_FilterCSVIncl(combinedDir,combinedDir,filtCSVName,filtCSVName,{'ParSep'},[-parHigh,parHigh]);
+FUNC_FilterCSVOmit(combinedDir,combinedDir,filtCSVName,filtCSVName,{'ParSep'},[-parLow,parLow]);
+%filter through perp seps
+FUNC_FilterCSVIncl(combinedDir,combinedDir,filtCSVName,filtCSVName,{'PerpSep'},[-perpHigh,perpHigh]);
+FUNC_FilterCSVOmit(combinedDir,combinedDir,filtCSVName,filtCSVName,{'PerpSep'},[-perpLow,perpLow]);
+%% plot histogram of relative parallel velocities
+%choose data to plot and extract data from csv file
+dataDir = fullfile(combinedDir,[filtCSVName '.csv']);
+fieldName = 'Vpar';
+filteredTable = readtable(dataDir);
+outerBinEdge = 10;
 numBins = 50;
-outerBinEdge = 1;
+%histogram parameters
+[sumN,edges] = FUNC_CSVHistogram(dataDir,fieldName);
 hold on
-histogram(RegParVels,linspace(-outerBinEdge,outerBinEdge,numBins));
-title(sprintf('Region Dimensions: [%1$.2f, %2$.2f, %3$.2f, %4$.2f]', regionDimensions(1),...
-    regionDimensions(2),regionDimensions(3),regionDimensions(4)));
+histogram(filteredTable.(fieldName),linspace(-outerBinEdge,outerBinEdge,numBins));
+title(sprintf('Region Dimensions: [%1$.2f, %2$.2f, %3$.2f, %4$.2f]', parLow,...
+    parHigh,perpLow,perpHigh));
 hold off
 %% Check with Linnea analysis
 BinInterframeRodPairDetails2(combinedDir,[csvName '_unscaled'],1,1,1,1149)
