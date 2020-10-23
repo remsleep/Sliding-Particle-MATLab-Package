@@ -1,25 +1,25 @@
 %% Define variables and parameters
-csvName = 'LinneaData';
-combinedDir = 'D:\Linnea Data\forRemi\2020-09-19 Linnea Plots Compare';
+csvName = 'CombinedData';
+combinedDir = 'C:\Users\Jude\Documents\SlidingMTData';
 dt = 1;
-pixelConv = 6.5*2/100;
-timeConv = 0.35;
+pixelConv = 0.101;
+timeConv = 1.29;
 
 %% Define directory
-dataDir = 'D:\Alex Two Color MT Data\Data Set 1\Channel 1 1150 frames';
+dataDir = 'C:\Users\Jude\Documents\MATLAB\For Linnea\Data tifs';
 outDir1 = dataDir;
 DATA_PATH = fullfile(dataDir, 'C1 tifs');
 [~, ySize] = FUNC_getImgDims(DATA_PATH, 'tif');
 
 %% Get Tracer particles
-% tracerParams = FUNC_getTracerParameters(DATA_PATH, 20);
+tracerParams = FUNC_getTracerParameters(DATA_PATH, 20);
 [MT_DATA,IMAGES] = FUNC_TracerFinderRedo(DATA_PATH, tracerParams);
 
 %% Convert to array
 allMTData = FUNC_MTStructure2Array(MT_DATA);
 
 %% Find Trajectories from detected Tracers
-% trajectoryParams = FUNC_getTrajectoryParameters(allMTData, IMAGES, 20);
+trajectoryParams = FUNC_getTrajectoryParameters(allMTData, IMAGES, 20);
 TRAJECTORY = FUNC_TrajectoryTracker(allMTData, trajectoryParams);
 
 %% Convert to right-handed axis system by flipping y
@@ -59,22 +59,6 @@ save(fullfile(combinedDir, 'tracks.mat'), 'tracks');
 FUNC_Trajs2VelPairs(combinedDir,combinedDir,[csvName '_unscaled'],dt,1,1);
 FUNC_Trajs2VelPairs(combinedDir,combinedDir,csvName,dt,pixelConv,timeConv);
 
-%% Region Analysis
-MTPairData = [JudeData(:,4)'; JudeData(:,5)'; JudeData(:,1)'; JudeData(:,9:10)'];
-MTPairData = MTPairData(:,mod(JudeData(:,7)' + JudeData(:,8)',2) == 1);%to filter through pairs 
-%from certain channel combinations
-QuadrantOption = 2;%%select 1 for one quadrant and 2 for all four quadrants
-regionDimensions = [0,100,0,100];%%[xlow,xhigh,ylow,yhigh]
-[percentMTs,RegParVels,RegPerpVels,RegCoords] = ...%Reg stands for region
-    FUNC_FindMTsInRegion(regionDimensions,QuadrantOption,MTPairData);
-%%plot histogram of relative parallel velocities
-numBins = 50;
-outerBinEdge = 1;
-hold on
-histogram(RegParVels,linspace(-outerBinEdge,outerBinEdge,numBins));
-title(sprintf('Region Dimensions: [%1$.2f, %2$.2f, %3$.2f, %4$.2f]', regionDimensions(1),...
-    regionDimensions(2),regionDimensions(3),regionDimensions(4)));
-hold off
 %% Check with Linnea analysis
 BinInterframeRodPairDetails2(combinedDir,[csvName '_unscaled'],1,1,1,1149)
 BinInterframeRodPairDetails2(combinedDir,[csvName '_unscaled'],timeConv,pixelConv,1,1149)

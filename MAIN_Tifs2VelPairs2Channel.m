@@ -1,6 +1,8 @@
 %% Define variables and parameters
 csvName = 'CombinedData';
-combinedDir = 'D:\Alex Two Color MT Data\Data Set 1\Combined';
+
+combinedDir = 'C:\Users\Jude\Documents\SlidingMTData';
+
 dt = 1;
 pixelConv = .101;
 timeConv = 1.29;
@@ -8,20 +10,20 @@ timeConv = 1.29;
 
 %% %%%%%%%%%%%%%%%% CHANNEL 1 %%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Define directory
-dataDir = 'D:\Alex Two Color MT Data\Data Set 1\Channel 1 1150 frames';
+dataDir = 'C:\Users\Jude\Documents\MATLAB\For Linnea\Data tifs';
 outDir1 = dataDir;
 DATA_PATH = fullfile(dataDir, 'C1 tifs');
 [~, ySize] = FUNC_getImgDims(DATA_PATH, 'tif');
 
 %% Get Tracer particles
-% tracerParams = FUNC_getTracerParameters(DATA_PATH, 20);
+tracerParams = FUNC_getTracerParameters(DATA_PATH, 20);
 [MT_DATA,IMAGES] = FUNC_TracerFinderRedo(DATA_PATH, tracerParams);
 
 %% Convert to array
 allMTData = FUNC_MTStructure2Array(MT_DATA);
 
 %% Find Trajectories from detected Tracers
-% trajectoryParams = FUNC_getTrajectoryParameters(allMTData, IMAGES, 20);
+trajectoryParams = FUNC_getTrajectoryParameters(allMTData, IMAGES, 20);
 TRAJECTORY = FUNC_TrajectoryTracker(allMTData, trajectoryParams);
 
 %% Convert to right-handed axis system by flipping y
@@ -44,20 +46,20 @@ save(fullfile(saveDir1,'parameters.mat'),'tracerParams','trajectoryParams');
 
 %% %%%%%%%%%%%%%%%% CHANNEL 2 %%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Define directory
-dataDir = 'D:\Alex Two Color MT Data\Data Set 1\Channel 2 1150 frames\';
+dataDir = 'C:\Users\Jude\Documents\MATLAB\For Linnea\Data tifs';
 outDir2 = dataDir;
 DATA_PATH = fullfile(dataDir, 'C2 tifs');
 [~, ySize] = FUNC_getImgDims(DATA_PATH, 'tif');
 
 %% Get Tracer particles
-% tracerParams = FUNC_getTracerParameters(DATA_PATH, 20);
+tracerParams = FUNC_getTracerParameters(DATA_PATH, 20);
 [MT_DATA,IMAGES] = FUNC_TracerFinderRedo(DATA_PATH, tracerParams);
 
 %% Convert to array
 allMTData = FUNC_MTStructure2Array(MT_DATA);
 
 %% Find Trajectories from detected Tracers
-% trajectoryParams = FUNC_getTrajectoryParameters(allMTData, IMAGES, 20);
+trajectoryParams = FUNC_getTrajectoryParameters(allMTData, IMAGES, 20);
 TRAJECTORY = FUNC_TrajectoryTracker(allMTData, trajectoryParams);
 
 %% Convert to right-handed axis system by flipping y
@@ -99,58 +101,16 @@ tracks2 = [trajs2(2,:); trajs2(3,:); trajs2(1,:); trajs2(5,:); trajs2(6,:); 2*on
 
 %% Concatenate
 tracks = [tracks1 tracks2]';
-
 %% Save 
 mkdir(combinedDir);
 save(fullfile(combinedDir, 'tracks.mat'), 'tracks');
 
 %% Find velocity pairs from trajectories
 FUNC_Trajs2VelPairs(combinedDir,combinedDir,[csvName '_Unscaled'],dt,1,1);
-JudeData = FUNC_Trajs2VelPairs(combinedDir,combinedDir,csvName,dt,pixelConv,timeConv);
-%% switch signs of velocities
-JUDE_SwitchVelocitySign(combinedDir,combinedDir,csvName,[csvName '_SignSwitched']);
-%% Filtering Through Data based on Angle, Separation, and Channel Nums
-%parameters for filtering through data
-parLow = 0;
-parHigh = 0.2;
-perpLow = 0;
-perpHigh = 10;
-angleCutOff = deg2rad(10);
-filtCSVName = [csvName '_Filtered'];
-%filter angles
-FUNC_FilterCSVIncl(combinedDir,combinedDir,csvName,filtCSVName,{'RelAngle'},[0,angleCutOff]);
-%filter through par seps
-FUNC_FilterCSVIncl(combinedDir,combinedDir,filtCSVName,filtCSVName,{'ParSep'},[-parHigh,parHigh]);
-FUNC_FilterCSVOmit(combinedDir,combinedDir,filtCSVName,filtCSVName,{'ParSep'},[-parLow,parLow]);
-%filter through perp seps
-FUNC_FilterCSVIncl(combinedDir,combinedDir,filtCSVName,filtCSVName,{'PerpSep'},[-perpHigh,perpHigh]);
-FUNC_FilterCSVOmit(combinedDir,combinedDir,filtCSVName,filtCSVName,{'PerpSep'},[-perpLow,perpLow]);
-%% plot histogram of relative parallel velocities
-%choose data to plot and extract data from csv file
-dataDir = fullfile(combinedDir,[filtCSVName '.csv']);
-fieldName = 'Vpar';
-filteredTable = readtable(dataDir);
-outerBinEdge = 10;
-FUNC_Trajs2VelPairs(combinedDir,combinedDir,[csvName '_unscaled'],dt,1,1);
+
 FUNC_Trajs2VelPairs(combinedDir,combinedDir,csvName,dt,pixelConv,timeConv);
 
-%% Region Analysis
-MTPairData = [JudeData(:,4)'; JudeData(:,5)'; JudeData(:,1)'; JudeData(:,9:10)'];
-MTPairData = MTPairData(:,mod(JudeData(:,7)' + JudeData(:,8)',2) == 1);%to filter through pairs 
-%from certain channel combinations
-QuadrantOption = 2;%%select 1 for one quadrant and 2 for all four quadrants
-regionDimensions = [0,100,0,100];%%[xlow,xhigh,ylow,yhigh]
-[percentMTs,RegParVels,RegPerpVels,RegCoords] = ...%Reg stands for region
-    FUNC_FindMTsInRegion(regionDimensions,QuadrantOption,MTPairData);
-%%plot histogram of relative parallel velocities
-numBins = 50;
-%histogram parameters
-[sumN,edges] = FUNC_CSVHistogram(dataDir,fieldName);
-hold on
-histogram(filteredTable.(fieldName),linspace(-outerBinEdge,outerBinEdge,numBins));
-title(sprintf('Region Dimensions: [%1$.2f, %2$.2f, %3$.2f, %4$.2f]', parLow,...
-    parHigh,perpLow,perpHigh));
-hold off
+
 %% Check with Linnea analysis
 BinInterframeRodPairDetails2(combinedDir,[csvName '_unscaled'],1,1,1,1149)
 BinInterframeRodPairDetails2(combinedDir,[csvName '_unscaled'],timeConv,pixelConv,1,1149)

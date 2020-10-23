@@ -182,8 +182,8 @@ for currFrame=1:endFrame
         
         %Separation along Parallel and Perp Axes
         [ParSep,PerpSep] = pol2cart(RelAngle,Rsep);
-        ParSep = ParSep * pixelConv;
-        PerpSep = PerpSep * pixelConv;
+%         ParSep = ParSep * pixelConv;
+%         PerpSep = PerpSep * pixelConv;
         
         %   Delta Angle?  (are the rods pointing in the same direction?)
         %   This should measure the smallest angle between two directions the rods are pointing.
