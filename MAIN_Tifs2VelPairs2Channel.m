@@ -1,10 +1,6 @@
 %% Define variables and parameters
 csvName = 'CombinedData';
-<<<<<<< HEAD:MAIN_Tifs2VelPairs.m
-combinedDir = 'C:\Users\Jude\Documents\SlidingMTData';
-=======
 combinedDir = 'D:\Alex Two Color MT Data\Data Set 1\Combined';
->>>>>>> 752734971e6d7b7365e9d51eebd4cf18ea24f0ad:MAIN_Tifs2VelPairs2Channel.m
 dt = 1;
 pixelConv = .101;
 timeConv = 1.29;
@@ -109,7 +105,6 @@ mkdir(combinedDir);
 save(fullfile(combinedDir, 'tracks.mat'), 'tracks');
 
 %% Find velocity pairs from trajectories
-<<<<<<< HEAD:MAIN_Tifs2VelPairs.m
 FUNC_Trajs2VelPairs(combinedDir,combinedDir,[csvName '_Unscaled'],dt,1,1);
 JudeData = FUNC_Trajs2VelPairs(combinedDir,combinedDir,csvName,dt,pixelConv,timeConv);
 %% switch signs of velocities
@@ -136,7 +131,6 @@ dataDir = fullfile(combinedDir,[filtCSVName '.csv']);
 fieldName = 'Vpar';
 filteredTable = readtable(dataDir);
 outerBinEdge = 10;
-=======
 FUNC_Trajs2VelPairs(combinedDir,combinedDir,[csvName '_unscaled'],dt,1,1);
 FUNC_Trajs2VelPairs(combinedDir,combinedDir,csvName,dt,pixelConv,timeConv);
 
@@ -149,7 +143,6 @@ regionDimensions = [0,100,0,100];%%[xlow,xhigh,ylow,yhigh]
 [percentMTs,RegParVels,RegPerpVels,RegCoords] = ...%Reg stands for region
     FUNC_FindMTsInRegion(regionDimensions,QuadrantOption,MTPairData);
 %%plot histogram of relative parallel velocities
->>>>>>> 752734971e6d7b7365e9d51eebd4cf18ea24f0ad:MAIN_Tifs2VelPairs2Channel.m
 numBins = 50;
 %histogram parameters
 [sumN,edges] = FUNC_CSVHistogram(dataDir,fieldName);
