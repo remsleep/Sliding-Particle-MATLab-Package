@@ -24,7 +24,11 @@ FUNC_FilterCSVIncl(combinedDir,combinedDir,filtCSVName,filtCSVName,...
 
 %% Look at different separation distances and plot parallel velocity distributions
 numRegions = 10;
+<<<<<<< HEAD
 regionInterval = 0.5;%in microns
+=======
+regionInterval = 5;%in microns
+>>>>>>> adding correctly working and updated code (1)
 
 regionDir = fullfile(combinedDir,'RegionComparison');
 mkdir(regionDir);
