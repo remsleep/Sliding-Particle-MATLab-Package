@@ -1,8 +1,12 @@
 %% Define variables and parameters
 csvName = 'CombinedData';
+<<<<<<< HEAD
 
 combinedDir = 'C:\Users\Jude\Documents\SlidingMTData';
 
+=======
+combinedDir = 'C:\Users\Jude\Documents\SlidingMTData';
+>>>>>>> adding correctly working and updated code
 dt = 1;
 pixelConv = .101;
 timeConv = 1.29;
@@ -110,7 +114,10 @@ FUNC_Trajs2VelPairs(combinedDir,combinedDir,[csvName '_Unscaled'],dt,1,1);
 
 FUNC_Trajs2VelPairs(combinedDir,combinedDir,csvName,dt,pixelConv,timeConv);
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> adding correctly working and updated code
 %% Check with Linnea analysis
 BinInterframeRodPairDetails2(combinedDir,[csvName '_unscaled'],1,1,1,1149)
 BinInterframeRodPairDetails2(combinedDir,[csvName '_unscaled'],timeConv,pixelConv,1,1149)

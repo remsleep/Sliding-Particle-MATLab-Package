@@ -39,8 +39,8 @@ savename=fullfile(outDir, [csvName,'.csv']);
 fileID= fopen(savename, 'w');
 %Output this:  [Rsep RelAngle DeltaA DeltaS DeltaVpar DeltaVperp Vpara Vperp];
 fprintf(fileID,...
-    '%12s, %12s, %12s, %12s, %12s, %12s, %12s, %12s , %12s, %12s \n',...
-    'Rsep', 'RelAngle', 'DeltaA', 'Vpar', 'Vperp', 'Time', 'ParSep', 'PerpSep', 'Ch1', 'Ch2');
+    '%12s, %12s, %12s, %12s, %12s, %12s, %12s, %12s , %12s, %12s, %12s \n',...
+    'Rsep', 'RelAngle', 'DeltaA', 'Vpar', 'Vperp', 'Time', 'ParSep', 'PerpSep', 'Ch1', 'Ch2', 'Ch1_Ch2');
 fclose(fileID);
 
 %Save every X frames.
@@ -196,9 +196,10 @@ for currFrame=1:endFrame
         time=frame1.*ones(size(Rsep,1),1);
         %Define channel columns
         ch1 = Data1(Ind1(:,1),6); ch2 = Data1(Ind1(:,2),6);
+        chComb = ch1 + ch2;
         
         % Concatenate data into a local variable to save
-        rawdata = [rawdata ; Rsep RelAngle DeltaA Vpar Vperp time ParSep PerpSep ch1 ch2];
+        rawdata = [rawdata ; Rsep RelAngle DeltaA Vpar Vperp time ParSep PerpSep ch1 ch2 chComb];
         
         
     end
