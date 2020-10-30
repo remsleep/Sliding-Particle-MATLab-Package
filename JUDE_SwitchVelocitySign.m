@@ -29,11 +29,11 @@ function [] = JUDE_SwitchVelocitySign(ogDir,outDir,ogName,outName)
     
     %Create Index Matrices to choose which entries to multiply by -1
     %first looking at parallel direction
-    parIndexMat = (parVelInfo >= 0) + (parSepInfo < 0) == 2;
+    parIndexMat = (parSepInfo < 0);
     parVelInfo(parIndexMat) = -parVelInfo(parIndexMat);
     
     %perp direction
-    perpIndexMat = (perpVelInfo >= 0) + (perpSepInfo < 0) == 2;
+    perpIndexMat = (perpSepInfo < 0);
     perpVelInfo(perpIndexMat) = -perpVelInfo(perpIndexMat);
     
     %update columns in table
