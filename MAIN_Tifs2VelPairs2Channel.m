@@ -1,10 +1,6 @@
 %% Define variables and parameters
 csvName = 'CombinedData';
-
-
 combinedDir = 'C:\Users\Jude\Documents\SlidingMTData';
-
-
 dt = 1;
 pixelConv = .101;
 timeConv = 1.29;

@@ -21,50 +21,61 @@ end
 regionWidth = 2;%in microns
 FUNC_FilterCSVIncl(combinedDir,combinedDir,filtCSVName,filtCSVName,...
     {'ParSep'},[-regionWidth,regionWidth]);
-
-%% Look at different separation distances and plot parallel velocity distributions
+%% Define region analysis parameters
 numRegions = 10;
-
-regionInterval = 5;%in microns
-
-
+regionInterval = 0.2;%in microns
 regionDir = fullfile(combinedDir,'RegionComparison');
 mkdir(regionDir);
+%% Create 2 dimensional parVels structure where fields are regions 
+parVels = struct();
 avgVels = zeros(1,10);
-RMSD = avgVels;
-regionVals = RMSD;
+RMSD = avgVels;%for error bars
+regionMidPts = RMSD;%to plot at center of region rather than on right or left side
 for region = 1:numRegions
+    %creating bounds for region
     lowerBound = (region-1)*regionInterval;
     upperBound = region*regionInterval;
-    regionVals(region) = (upperBound+lowerBound)/2;
+    regionMidPts(region) = (upperBound+lowerBound)/2;
     
     fileName = [filtCSVName '_' num2str(region)];
     FUNC_FilterCSVIncl(combinedDir,regionDir,filtCSVName,fileName,{'PerpSep'},[-upperBound,upperBound]);
     FUNC_FilterCSVOmit(regionDir,regionDir,fileName,fileName,{'PerpSep'},[-lowerBound,lowerBound]);
-    %plotting parameters
-    
-    numBins = 500;
-    %plot for each region
-    figure(region);
-    filteredTable = readtable(fullfile(regionDir,fileName));
-    parVels = filteredTable.('Vpar');
-    
-    outerBinEdge = 3*std(parVels);
-    [N,edges] = histcounts(parVels,numBins);
-    
-    
-    scatter(mean([edges(1:end-1);edges(2:end)]),N,'filled');
-%     histogram(parVels,linspace(-outerBinEdge,outerBinEdge,numBins));
-    title([num2str(lowerBound) ' to ' num2str(upperBound) ' microns']);
 
     
-    avgVels(region) = mean(parVels);
-    RMSD(region) = sqrt((1/(length(parVels)-1))*sum((parVels-avgVels(region)).^2));
+    filteredTable = readtable(fullfile(regionDir,fileName));
+    currFieldName = ['RegionNum_' num2str(region)];
+    parVels.(currFieldName) = filteredTable.('Vpar');
     
-end
+    currParVels = parVels.(currFieldName);
+    avgVels(region) = mean(currParVels);
+    RMSD(region) = sqrt((1/(length(currParVels)-1))*sum((currParVels-avgVels(region)).^2));
+  
+end   
+%%finding scaling factor
     scale = diff(avgVels);
     avgScale = mean(scale);
+%% Apply scaling factor correction to parVels array
+for region = 1:numRegions
+   currFieldName = ['RegionNum_' num2str(region)];
+   parVels.(currFieldName) = parVels.(currFieldName) + (avgScale * region);
+end
+%% Plot Relative Velocity Distributions for Each Region
+numBins = 500;
+for region = 1:numRegions
+    currFieldName = ['RegionNum_' num2str(region)];
+    edges = linspace(-5,5,numBins);
+    N = histcounts(parVels.(currFieldName),edges);
     
+    figure(region);
+    scatter(mean([edges(1:end-1);edges(2:end)]),N,'filled');
+    
+    lowerBound = (region-1)*regionInterval;
+    upperBound = region*regionInterval;
+    title([num2str(lowerBound) ' to ' num2str(upperBound) ' microns']);
+    
+end    
+%     histogram(parVels,linspace(-outerBinEdge,outerBinEdge,numBins));    
     figure(region+1);
-    errorbar(regionVals,avgVels,RMSD);
+    errorbar(regionMidPts,avgVels,RMSD);
+    title('Average Velocity versus Region Separation Distance');
     
