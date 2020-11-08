@@ -2,20 +2,21 @@
 csvName = 'CombinedData';
 combinedDir = 'C:\Users\Jude\Documents\SlidingMTData';
 dataLoc = fullfile(combinedDir,csvName);
-
 %% Switch Velocity 
 %signs so positive velocity corresponds to contractile motion while 
 %positive velocity corresponds to extensile motion
 JUDE_SwitchVelocitySign(combinedDir,combinedDir,csvName,[csvName '_SignSwitched']);
-%% Filter Through Data based on Angle and Channel Numbers
+%% Filter Through Data based on Angle
 angleCutOff = deg2rad(10);
 filtCSVName = [csvName '_Filtered'];
-FUNC_FilterCSVOmit(combinedDir,combinedDir,[csvName '_SignSwitched'],filtCSVName,{'RelAngle'},[angleCutOff,(2*pi)-angleCutOff]);
+% FUNC_FilterCSVOmit(combinedDir,combinedDir,[csvName '_SignSwitched'],filtCSVName,{'RelAngle'},[angleCutOff,(2*pi)-angleCutOff]);
+
+%% Filter Through Data based on Channel Number
 %for channel option can choose 1:any channel combination, 2:both MTs from first channel
 %, 3: pair contains one MT from each channel, 4: both MTs from second channel
 ChOpt = 3;
 if ChOpt ~= 1
-    FUNC_FilterCSVIncl(combinedDir,combinedDir,[csvName '_SignSwitched'],filtCSVName,{'Ch1_Ch2'},[ChOpt,ChOpt]);
+    FUNC_FilterCSVIncl(combinedDir,combinedDir,csvName,filtCSVName,{'Ch1_Ch2'},[ChOpt,ChOpt]);
 end
 %% Filtering to create region with Desired Separation Width
 regionWidth = 2;%in microns
@@ -54,20 +55,30 @@ end
 %%finding scaling factor
     scale = diff(avgVels);
     avgScale = mean(scale);
-%% Apply scaling factor correction to parVels array
+%% Apply horizontal scaling factor correction to parVels Structure
 for region = 1:numRegions
    currFieldName = ['RegionNum_' num2str(region)];
    parVels.(currFieldName) = parVels.(currFieldName) + (avgScale * region);
+end
+%% Extract vertical scaling factor correction to parVels Structure
+% crude vertical scaling where scaling factor is based on number of
+% velocities in distribution
+verScaleFactor = zeros(numRegions,1);
+for region = 1:numRegions
+    currFieldName = ['RegionNum_' num2str(region)];
+    verScaleFactor(region,1) = length(parVels.(currFieldName));
 end
 %% Plot Relative Velocity Distributions for Each Region
 numBins = 500;
 for region = 1:numRegions
     currFieldName = ['RegionNum_' num2str(region)];
-    edges = linspace(-5,5,numBins);
+    edges = linspace(-1,1,numBins);
     N = histcounts(parVels.(currFieldName),edges);
     
+    N_scaled = N/verScaleFactor(region,1);
+    
     figure(region);
-    scatter(mean([edges(1:end-1);edges(2:end)]),N,'filled');
+    scatter(mean([edges(1:end-1);edges(2:end)]),N_scaled,'filled');
     
     lowerBound = (region-1)*regionInterval;
     upperBound = region*regionInterval;
@@ -77,5 +88,29 @@ end
 %     histogram(parVels,linspace(-outerBinEdge,outerBinEdge,numBins));    
     figure(region+1);
     errorbar(regionMidPts,avgVels,RMSD);
-    title('Average Velocity versus Region Separation Distance');
+    title('Average Velocity versus Region Separation Distance');    
+%% Overlay all distributions 
+numBins = 50;
+figure(region+2);
+hold on;
+legendNames = cell(1,numRegions);
+for region = 1:numRegions
+    currFieldName = ['RegionNum_' num2str(region)];
+    edges = linspace(-0.6,0.6,numBins);
+    N = histcounts(parVels.(currFieldName),edges);
     
+    N_scaled = N/verScaleFactor(region,1);
+    
+    color = [1-(region-1)/numRegions,(region-1)/numRegions,(region-1)/numRegions];
+    scatter(mean([edges(1:end-1);edges(2:end)]),N_scaled,'filled','MarkerFaceColor',color);
+    
+    lowerBound = (region-1)*regionInterval;
+    upperBound = region*regionInterval;
+    
+    str = [num2str(lowerBound), ' to ',num2str(upperBound),' microns'];
+    legendNames{region} = join(str);
+end
+    title('Overlayed Parallel Velocity Distributions');
+    legend(legendNames);
+    
+hold off;
