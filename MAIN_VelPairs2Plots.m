@@ -69,6 +69,8 @@ for region = 1:numRegions
     verScaleFactor(region,1) = length(parVels.(currFieldName));
 end
 %% Plot Relative Velocity Distributions for Each Region
+plotOpt = 1;
+%^determines whether gaussian fit will be plotted; 0: no gaussian fit, 1:gaussian fit
 numBins = 500;
 for region = 1:numRegions
     currFieldName = ['RegionNum_' num2str(region)];
@@ -78,7 +80,14 @@ for region = 1:numRegions
     N_scaled = N/verScaleFactor(region,1);
     
     figure(region);
-    scatter(mean([edges(1:end-1);edges(2:end)]),N_scaled,'filled');
+    
+    if plotOpt == 1
+        f = fit(mean([edges(1:end-1);edges(2:end)])',N_scaled','gauss2');
+        plot(f,'r',mean([edges(1:end-1);edges(2:end)]),N_scaled);
+    elseif plotOpt == 0
+        scatter(mean([edges(1:end-1);edges(2:end)]),N_scaled,'filled');
+    end
+    
     
     lowerBound = (region-1)*regionInterval;
     upperBound = region*regionInterval;
@@ -96,13 +105,16 @@ hold on;
 legendNames = cell(1,numRegions);
 for region = 1:numRegions
     currFieldName = ['RegionNum_' num2str(region)];
-    edges = linspace(-0.6,0.6,numBins);
+    edges = linspace(-1,1,numBins);
     N = histcounts(parVels.(currFieldName),edges);
     
     N_scaled = N/verScaleFactor(region,1);
     
+    
+%     if ((region == 1) || (region == numRegions))
     color = [1-(region-1)/numRegions,(region-1)/numRegions,(region-1)/numRegions];
     scatter(mean([edges(1:end-1);edges(2:end)]),N_scaled,'filled','MarkerFaceColor',color);
+%     end
     
     lowerBound = (region-1)*regionInterval;
     upperBound = region*regionInterval;
@@ -112,5 +124,42 @@ for region = 1:numRegions
 end
     title('Overlayed Parallel Velocity Distributions');
     legend(legendNames);
+
+hold off;
+%% Overlay Gaussian Fits
+numBins = 50;
+figure(region+3);
+hold on;
+legendNames = strings(1,numRegions);
+for region = 1:numRegions
+    %bin data based on parallel relative velocity
+    currFieldName = ['RegionNum_' num2str(region)];
+    edges = linspace(-1,1,numBins);
+    N = histcounts(parVels.(currFieldName),edges);
     
+    N_scaled = N/verScaleFactor(region,1);
+    color = [1-(region-1)/numRegions,0,(region-1)/numRegions];
+    
+    %find gaussian fit
+    f = fit(mean([edges(1:end-1);edges(2:end)])',N_scaled','gauss2');
+    p = plot(f,mean([edges(1:end-1);edges(2:end)]),N_scaled);
+    
+    %delete scatter data to see gaussian distributions more clearly
+    delete(p(1,1));
+    
+    %create legend names for each distribution
+    lowerBound = (region-1)*regionInterval;
+    upperBound = region*regionInterval;
+    str = [num2str(lowerBound) ' to ' num2str(upperBound) ' microns'];
+    
+    %set color for each distribution and display correct legend name
+    fitLine = p(2,1);
+    fitLine.Color = color;
+    set(fitLine,'DisplayName',str,'Color',color);
+   
+end
+    title('Overlayed Parallel Velocity Gaussian Fits');
+    xlabel('parallel relative velocity (um/s)');
+    ylabel('normalized frequency');
+
 hold off;
