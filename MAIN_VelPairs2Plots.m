@@ -16,7 +16,7 @@ filtCSVName = [csvName '_Filtered'];
 %, 3: pair contains one MT from each channel, 4: both MTs from second channel
 ChOpt = 3;
 if ChOpt ~= 1
-    FUNC_FilterCSVIncl(combinedDir,combinedDir,csvName,filtCSVName,{'Ch1_Ch2'},[ChOpt,ChOpt]);
+    FUNC_FilterCSVIncl(combinedDir,combinedDir,[csvName '_SignSwitched'],filtCSVName,{'Ch1_Ch2'},[ChOpt,ChOpt]);
 end
 %% Filtering to create region with Desired Separation Width
 regionWidth = 2;%in microns
@@ -29,14 +29,12 @@ regionDir = fullfile(combinedDir,'RegionComparison');
 mkdir(regionDir);
 %% Create 2 dimensional parVels structure where fields are regions 
 parVels = struct();
-avgVels = zeros(1,10);
-RMSD = avgVels;%for error bars
-regionMidPts = RMSD;%to plot at center of region rather than on right or left side
+
 for region = 1:numRegions
     %creating bounds for region
     lowerBound = (region-1)*regionInterval;
     upperBound = region*regionInterval;
-    regionMidPts(region) = (upperBound+lowerBound)/2;
+
     
     fileName = [filtCSVName '_' num2str(region)];
     FUNC_FilterCSVIncl(combinedDir,regionDir,filtCSVName,fileName,{'PerpSep'},[-upperBound,upperBound]);
@@ -46,15 +44,25 @@ for region = 1:numRegions
     filteredTable = readtable(fullfile(regionDir,fileName));
     currFieldName = ['RegionNum_' num2str(region)];
     parVels.(currFieldName) = filteredTable.('Vpar');
-    
+  
+end   
+
+%% Use mean parallel relative velocity from each region to find horizontal scaling factor
+avgVels = zeros(1,10);
+RMSD = avgVels;%for error bars
+regionMidPts = RMSD;
+for region = 1:numRegions
+    currFieldName = ['RegionNum_' num2str(region)];
     currParVels = parVels.(currFieldName);
     avgVels(region) = mean(currParVels);
     RMSD(region) = sqrt((1/(length(currParVels)-1))*sum((currParVels-avgVels(region)).^2));
-  
-end   
-%%finding scaling factor
+    regionMidPts(region) = (((region-1)*(regionInterval))+(region*regionInterval))/2;
+end
     scale = diff(avgVels);
     avgScale = mean(scale);
+    figure(1);
+    errorbar(regionMidPts,avgVels,RMSD);
+    title('Average Velocity versus Region Separation Distance'); 
 %% Apply horizontal scaling factor correction to parVels Structure
 for region = 1:numRegions
    currFieldName = ['RegionNum_' num2str(region)];
