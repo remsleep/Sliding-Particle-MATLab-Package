@@ -9,14 +9,14 @@ JUDE_SwitchVelocitySign(combinedDir,combinedDir,csvName,[csvName '_SignSwitched'
 %% Filter Through Data based on Angle
 angleCutOff = deg2rad(10);
 filtCSVName = [csvName '_Filtered'];
-% FUNC_FilterCSVOmit(combinedDir,combinedDir,[csvName '_SignSwitched'],filtCSVName,{'RelAngle'},[angleCutOff,(2*pi)-angleCutOff]);
+FUNC_FilterCSVOmit(combinedDir,combinedDir,[csvName '_SignSwitched'],filtCSVName,{'DeltaA'},[angleCutOff,(2*pi)-angleCutOff]);
 
 %% Filter Through Data based on Channel Number
 %for channel option can choose 1:any channel combination, 2:both MTs from first channel
 %, 3: pair contains one MT from each channel, 4: both MTs from second channel
-ChOpt = 3;
+ChOpt = 1;
 if ChOpt ~= 1
-    FUNC_FilterCSVIncl(combinedDir,combinedDir,[csvName '_SignSwitched'],filtCSVName,{'Ch1_Ch2'},[ChOpt,ChOpt]);
+    FUNC_FilterCSVIncl(combinedDir,combinedDir,filtCSVName,filtCSVName,{'Ch1_Ch2'},[ChOpt,ChOpt]);
 end
 %% Filtering to create region with Desired Separation Width
 regionWidth = 2;%in microns
@@ -79,7 +79,7 @@ end
 %% Plot Relative Velocity Distributions for Each Region
 plotOpt = 1;
 %^determines whether gaussian fit will be plotted; 0: no gaussian fit, 1:gaussian fit
-numBins = 500;
+numBins = 50;
 for region = 1:numRegions
     currFieldName = ['RegionNum_' num2str(region)];
     edges = linspace(-1,1,numBins);
