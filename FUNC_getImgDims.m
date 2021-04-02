@@ -8,8 +8,8 @@ function [xDim,yDim] = FUNC_getImgDims(directory, imgType)
 FILES = dir([directory '\*.' imgType]);
 
 IMAGE = imread(fullfile(directory, FILES(1).name));
-xDim = size(IMAGE,1);
-yDim = size(IMAGE,2);
+xDim = size(IMAGE,2);
+yDim = size(IMAGE,1);
 
 end
 

@@ -1,4 +1,4 @@
-function ds=Stephen_CalcRelVelocities2(directory,analysisDir,csvName)
+function [dupCount,ds]=Stephen_CalcRelVelocities2(directory,analysisDir,csvName)
 % This program measures the interframe velocity between rod pairs!
 % For example, the program will find all of the rods which appear in consecutive frames (conserved particle IDs)
 % and then calculates the relative velocities between those pairs.
@@ -26,7 +26,7 @@ function ds=Stephen_CalcRelVelocities2(directory,analysisDir,csvName)
 
 dt=1; %Set the inter-frame time-step over which velocities are measured IN Delta-FRAMES!!!! NOT SECONDS.
 %This can help with smoothing velocities by measuring them over slightly large time steps.
-
+dupCount = 1;
 
 %%
 %Prepare a variable on the disk to save to periodically to speed things up
@@ -94,11 +94,26 @@ for i=1:endframe;
         %Find the ID#s which are the same in Both frames in order to compare
         %interframe velocities.  Make Combos out of all these.
         
+                
+
         %Gather the Indices of the XY positions for Particle 1&2 at times 1&2.
-        for j=1:size(combos,1);
-            Ind1(j,1:2)=[ find(Data1(:,5)==combos(j,1))  find(Data1(:,5)==combos(j,2)) ]; %Index [Particle1 Particle2] at time1
-            Ind2(j,1:2)=[ find(Data2(:,5)==combos(j,1))  find(Data2(:,5)==combos(j,2)) ]; %Index [Particle1 Particle2] at time2
+        for j=1:size(combos,1)
+            try
+                Ind1(j,1:2)=[ find(Data1(:,5)==combos(j,1))  find(Data1(:,5)==combos(j,2)) ]; %Index [Particle1 Particle2] at time1
+                Ind2(j,1:2)=[ find(Data2(:,5)==combos(j,1))  find(Data2(:,5)==combos(j,2)) ]; %Index [Particle1 Particle2] at time2
+            catch
+            Ind1(j,1:2)=[ min(find(Data1(:,5)==combos(j,1)))  min(find(Data1(:,5)==combos(j,2))) ]; %Index [Particle1 Particle2] at time1
+            Ind2(j,1:2)=[ min(find(Data2(:,5)==combos(j,1)))  min(find(Data2(:,5)==combos(j,2))) ]; %Index [Particle1 Particle2] at time2
+            dupCount = dupCount + 1;
+            end
         end
+        
+        % OG.
+%         %Gather the Indices of the XY positions for Particle 1&2 at times 1&2.
+%         for j=1:size(combos,1);
+%             Ind1(j,1:2)=[ find(Data1(:,5)==combos(j,1))  find(Data1(:,5)==combos(j,2)) ]; %Index [Particle1 Particle2] at time1
+%             Ind2(j,1:2)=[ find(Data2(:,5)==combos(j,1))  find(Data2(:,5)==combos(j,2)) ]; %Index [Particle1 Particle2] at time2
+%         end
         
         % Vx' = Vx Cos(theta) - Vy Sin(theta)
         % Vy' = Vx Sin(theta) + Vy Cos(theta)

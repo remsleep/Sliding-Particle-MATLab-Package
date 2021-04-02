@@ -43,6 +43,7 @@ frameTot = size(IMAGES, 3);
 for currFrame = 1:frameTot
     FUNC_overlayMTsImage(MT_DATA(currFrame).MTs, IMAGES(:,:,currFrame));
     pause(.1);
+%     saveas(gcf,[num2str(currFrame), '.jpg'])
 end
 end
 

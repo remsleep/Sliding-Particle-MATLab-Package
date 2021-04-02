@@ -1,10 +1,10 @@
 %% This script lets the user plot histogram distributions of velocity pair data
 
 %% Filter out all pairs oriented more than cutOffAng radians apart
-ogDir = 'D:\Linnea Data\forRemi\2020-09-19 Linnea Plots Compare';
-outDir = 'D:\Linnea Data\forRemi\2020-09-19 Linnea Plots Compare\10 Degree Filter';
-ogName = 'LinneaData';
-outName = 'LinneaData.csv_10degreeFilter';
+ogDir = 'E:\Two Channel Nematic\Linnea Data\forRemi\Batch1';
+outDir = 'E:\Two Channel Nematic\Linnea Data\forRemi\Batch1\10 Degree Filter';
+ogName = 'Batch1_LHVelPairs.csv';
+outName = 'LinneaDataB1_10degreeFilter';
 
 cutOffAng = deg2rad(10);
 FUNC_FilterCSVIncl(ogDir,outDir,ogName,outName,{'DeltaA'},[-cutOffAng cutOffAng])
@@ -31,18 +31,19 @@ ylabel('Counts')
 
 
 %% Filter along Parallel and Perpendicular axes 
-ogDir = 'D:\Linnea Data\forRemi\2020-09-19 Linnea Plots Compare\10 Degree Filter';
-outDir = 'D:\Linnea Data\forRemi\2020-09-19 Linnea Plots Compare\10 Degree Filter';
-ogName = 'LinneaData_10degreeFilter.csv';
+ogDir = 'E:\Two Channel Nematic\Linnea Data\forRemi\Batch1\10 Degree Filter';
+outDir = ogDir;
+ogName = 'LinneaDataB1_10degreeFilter';
 
-cutOffParSep = 2; cutOffPerpSep = cutOffParSep;
+cutOffParSep = 6; cutOffPerpSep = cutOffParSep;
+FUNC_FilterCSVIncl(ogDir,outDir,ogName,[ogName '_WithinDeltaR.csv'],{'Rsep'},[-cutOffParSep cutOffParSep])
 FUNC_FilterCSVIncl(ogDir,outDir,ogName,[ogName '_AlongPerpendicularAxis.csv'],{'ParSep'},[-cutOffParSep cutOffParSep])
 FUNC_FilterCSVIncl(ogDir,outDir,ogName,[ogName '_AlongParallelAxis.csv'],{'PerpSep'},[-cutOffPerpSep cutOffPerpSep])
 
 
 %% Plot separation distributions
-outDir = 'D:\Alex Two Color MT Data\Data Set 1\Combined\10 Degree Filter';
-outName = 'CombinedData_10degreeFilter_AlongPerpendicularAxis.csv';
+% outDir = 'D:\Alex Two Color MT Data\Data Set 1\Combined\10 Degree Filter';
+outName = 'LinneaDataB1_10degreeFilter_WithinDeltaR.csv';
 fileLoc = fullfile(outDir, outName);
 % figure
 [N, edges, ~] = FUNC_CSVHistogram(fileLoc,'PerpSep',-60:2:60);
@@ -54,20 +55,22 @@ xlabel('Separation Distance (um)')
 ylabel('Counts')
 
 %% Make collection of velocity filter .csv's
-ogDir = 'D:\Alex Two Color MT Data\Data Set 1\Combined\10 Degree Filter';
-outDir = fullfile(ogDir,'Separation Filters Along Perp Axis');
-ogName = 'CombinedData_10degreeFilter_AlongPerpendicularAxis.csv';
+ogDir = 'E:\Two Channel Nematic\Linnea Data\forRemi\Batch1\10 Degree Filter';
+outDir = fullfile(ogDir,'Separation Filters Along Par Axis');
+ogName = 'LinneaDataB1_10degreeFilter_AlongParallelAxis.csv';
 mkdir(outDir);
+minSep = 6; maxSep = 100; spacing = 13;
+spacingMat = minSep:spacing:maxSep;
 
-for index = 1:5
+for index = 1:numel(spacingMat)
 
-    cutOffSepVal = index*.400;
-    outName = sprintf('10degFilt_PerpAxis_%snm_MaxPerpSep',num2str(100*index));
-    FUNC_FilterCSVIncl(ogDir,outDir,ogName,outName,{'PerpSep'},[-cutOffSepVal cutOffSepVal])
+    cutOffSepVal = spacingMat(index);
+    outName = sprintf('10degFilt_ParAxis_%sum_MaxParSep',num2str(spacingMat(index)));
+    FUNC_FilterCSVIncl(ogDir,outDir,ogName,outName,{'ParSep'},[-cutOffSepVal cutOffSepVal])
     
     fileLoc = fullfile(outDir, [outName '.csv']);
     figure
-    [N, edges, ~] = FUNC_CSVHistogram(fileLoc,'Vpar');
+    [N, edges, ~] = FUNC_CSVHistogram(fileLoc,'Vperp');
     histogram('BinCounts', N, 'BinEdges', edges)
     set(gca, 'FontSize', 14)
     title({'{\bf\fontsize{14} Perpendicular axis pair distribution by perpendicular separation distance}'; ...
@@ -76,11 +79,14 @@ for index = 1:5
     ylabel('Counts')
 end
 
+%% Iterate through .csv's, fit to Gaussians, plot, and extract mean velocities
+dataDir = 
+
 %% Reproduce Linnea Figures
-boundVals = 6; sepBounds = .9; binSize = .1;
+boundVals = 6; sepBounds = 10; binSize = 1;
 % Parallel Velocity distribution within 5um along Parallel Axis
-ogDir = 'D:\Linnea Data\forRemi\2020-09-19 Linnea Plots Compare\10 Degree Filter';
-ogName = 'LinneaData_10degreeFilter_AlongParallelAxis.csv';
+ogDir = 'E:\Two Channel Nematic\Linnea Data\forRemi\Batch1\10 Degree Filter';
+ogName = 'LinneaDataB1_10degreeFilter_AlongParallelAxis.csv';
 outDir = fullfile(ogDir,'Separation Filters Along Par Axis');
 outName = '10degFilt_ParAxis6umFilt.csv';
 FUNC_FilterCSVIncl(ogDir,outDir,ogName,outName,{'ParSep'},[-boundVals boundVals]);

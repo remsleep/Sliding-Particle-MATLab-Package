@@ -50,7 +50,7 @@ for currMT = numel(TRAJECTORY):lastMT %Go through every MT we see (currentMT)
     compMT = 1;
     while compMT <= numel(TRAJECTORY) %Go through every trajectory already, see if MT belongs there (comparing MT)
         
-        if TRAJECTORY(compMT).FRAME(end) < (MT_FRAME(currMT) - 2) %Was this Trajectory tracked within the last two frames?
+        if TRAJECTORY(compMT).FRAME(end) < (MT_FRAME(currMT) - 6) %Was this Trajectory tracked within the last two frames?
             if length(TRAJECTORY(compMT).FRAME) > MIN_FRAMES  %If not, is it long enough to store?
                 FIN_TRAJECTORY(end+1) = TRAJECTORY(compMT);  %store it
             end

@@ -1,4 +1,4 @@
-function rawdata=Stephen_CalcRelVelocities2(DataSet)
+function rawdata=FORTEST_Stephen_CalcRelVelocities2(DataSet)
 % This program measures the interframe velocity between rod pairs!
 % For example, the program will find all of the rods which appear in consecutive frames (conserved particle IDs)
 % and then calculates the relative velocities between those pairs.
