@@ -1,7 +1,14 @@
 %% Define Location of CSV File
 csvName = 'CombinedData';
-combinedDir = 'C:\Users\Jude\Documents\SlidingMTData';
+combinedDir = 'C:\Users\judem\Documents\SlidingMTData';
 dataLoc = fullfile(combinedDir,csvName);
+%% Stitch Different Data Sets Together
+savename = fullfile(combinedDir,csvName);
+numSets = 0;
+for set = 1:numSets
+    setname = fullfile(combinedDir, [csvName '(' num2str(set) ')']);
+    JUDE_StitchDatSets(savename,setname);
+end
 %% Switch Velocity 
 %signs so positive velocity corresponds to contractile motion while 
 %positive velocity corresponds to extensile motion
@@ -29,6 +36,7 @@ regionDir = fullfile(combinedDir,'RegionComparison');
 mkdir(regionDir);
 %% Create 2 dimensional parVels structure where fields are regions 
 parVels = struct();
+%create array to determine number of data points for each distribution
 
 for region = 1:numRegions
     %creating bounds for region
@@ -80,6 +88,16 @@ end
 plotOpt = 1;
 %^determines whether gaussian fit will be plotted; 0: no gaussian fit, 1:gaussian fit
 numBins = 50;
+
+%creating array to determine num data points for each distribution and each
+%bin within that distribution
+numDataPerDist = zeros(1,numRegions);
+numDataPerBin = zeros(numBins-1,numRegions);
+
+%create array that stores peaks of each distribution
+peaks = zeros(1,numRegions);
+
+%create bins for each region and plot distribution
 for region = 1:numRegions
     currFieldName = ['RegionNum_' num2str(region)];
     edges = linspace(-1,1,numBins);
@@ -88,11 +106,15 @@ for region = 1:numRegions
     N_scaled = N/verScaleFactor(region,1);
     
     figure(region);
-    
-    if plotOpt == 1
+    if plotOpt == 1 %single gaussian distribution
+        f = fit(mean([edges(1:end-1);edges(2:end)])',N_scaled','gauss1');
+        plot(f,'r',mean([edges(1:end-1);edges(2:end)]),N_scaled);
+        peaks(1,region) = f.b1;
+    elseif plotOpt == 2 %double gaussian distribution
         f = fit(mean([edges(1:end-1);edges(2:end)])',N_scaled','gauss2');
         plot(f,'r',mean([edges(1:end-1);edges(2:end)]),N_scaled);
-    elseif plotOpt == 0
+        
+    elseif plotOpt == 0 % scatter plot
         scatter(mean([edges(1:end-1);edges(2:end)]),N_scaled,'filled');
     end
     
@@ -101,6 +123,8 @@ for region = 1:numRegions
     upperBound = region*regionInterval;
     title([num2str(lowerBound) ' to ' num2str(upperBound) ' microns']);
     
+    numDataPerDist(1,region) = length(parVels.(currFieldName));
+    numDataPerBin(1:numBins-1,region) = N';
 end    
 %     histogram(parVels,linspace(-outerBinEdge,outerBinEdge,numBins));    
     figure(region+1);
@@ -135,6 +159,7 @@ end
 
 hold off;
 %% Overlay Gaussian Fits
+plotOpt = 1;
 numBins = 50;
 figure(region+3);
 hold on;
@@ -149,7 +174,11 @@ for region = 1:numRegions
     color = [1-(region-1)/numRegions,0,(region-1)/numRegions];
     
     %find gaussian fit
-    f = fit(mean([edges(1:end-1);edges(2:end)])',N_scaled','gauss2');
+    if plotOpt == 1
+        f = fit(mean([edges(1:end-1);edges(2:end)])',N_scaled','gauss1');
+    elseif plotOpt == 2
+        f = fit(mean([edges(1:end-1);edges(2:end)])',N_scaled','gauss2');
+    end
     p = plot(f,mean([edges(1:end-1);edges(2:end)]),N_scaled);
     
     %delete scatter data to see gaussian distributions more clearly
@@ -163,7 +192,7 @@ for region = 1:numRegions
     %set color for each distribution and display correct legend name
     fitLine = p(2,1);
     fitLine.Color = color;
-    set(fitLine,'DisplayName',str,'Color',color);
+    fitLine.DisplayName = str;
    
 end
     title('Overlayed Parallel Velocity Gaussian Fits');
@@ -171,3 +200,9 @@ end
     ylabel('normalized frequency');
 
 hold off;
+%% Plotting Peaks for Each Region
+hold on
+figure(region + 4)
+scatter(regionMidPts,peaks);
+title('Distribution Peaks for Each Region');
+hold off
