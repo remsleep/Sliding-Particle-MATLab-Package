@@ -79,9 +79,6 @@ for index = 1:numel(spacingMat)
     ylabel('Counts')
 end
 
-%% Iterate through .csv's, fit to Gaussians, plot, and extract mean velocities
-dataDir = 
-
 %% Reproduce Linnea Figures
 boundVals = 6; sepBounds = 10; binSize = 1;
 % Parallel Velocity distribution within 5um along Parallel Axis
