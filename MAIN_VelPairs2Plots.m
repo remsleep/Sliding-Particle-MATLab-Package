@@ -12,8 +12,8 @@ for dataSet = 1:numDataSets
     dataName = fullfile(combinedDir,[csvName '_' num2str(dataSet)]);
     Jude_StitchDataSets(saveName,dataName);
 end
-%% Switch Velocity 
-%signs so positive velocity corresponds to contractile motion while 
+%% Switch Velocity Signs
+%ensures negative velocity corresponds to contractile motion while 
 %positive velocity corresponds to extensile motion
 JUDE_SwitchVelocitySign(combinedDir,combinedDir,csvName,[csvName '_SignSwitched']);
 %% Filter Through Data based on Angle
@@ -31,12 +31,17 @@ end
 %% Filtering to create region with Desired Separation Width
 regionWidth = 2;%in microns
 FUNC_FilterCSVIncl(combinedDir,combinedDir,filtCSVName,filtCSVName,...
-    {'ParSep'},[-regionWidth,regionWidth]);
+    {'PerpSep'},[-regionWidth,regionWidth]);
 %% Define region analysis parameters
 numRegions = 10;
-regionInterval = 0.2;%in microns
+regionInterval = 4;%in microns
 regionDir = fullfile(combinedDir,'RegionComparison');
 mkdir(regionDir);
+regionMidPts = zeros(1,numRegions);
+for region = 1:numRegions
+    regionMidPts(region) = (((region-1)*(regionInterval))+(region*regionInterval))/2;
+end
+
 %% Create 2 dimensional parVels structure where fields are regions 
 parVels = struct();
 
@@ -47,8 +52,8 @@ for region = 1:numRegions
 
     
     fileName = [filtCSVName '_' num2str(region)];
-    FUNC_FilterCSVIncl(combinedDir,regionDir,filtCSVName,fileName,{'PerpSep'},[-upperBound,upperBound]);
-    FUNC_FilterCSVOmit(regionDir,regionDir,fileName,fileName,{'PerpSep'},[-lowerBound,lowerBound]);
+    FUNC_FilterCSVIncl(combinedDir,regionDir,filtCSVName,fileName,{'ParSep'},[-upperBound,upperBound]);
+    FUNC_FilterCSVOmit(regionDir,regionDir,fileName,fileName,{'ParSep'},[-lowerBound,lowerBound]);
 
     
     filteredTable = readtable(fullfile(regionDir,fileName));
@@ -56,30 +61,33 @@ for region = 1:numRegions
     parVels.(currFieldName) = filteredTable.('Vpar');
   
 end   
-
-%% Use mean parallel relative velocity from each region to find horizontal scaling factor
-avgVels = zeros(1,10);
-RMSD = avgVels;%for error bars
-regionMidPts = RMSD;
-
-
+%% Extract Amount of Data in Each Region
+numDataDist = zeros(1,numRegions);
 for region = 1:numRegions
     currFieldName = ['RegionNum_' num2str(region)];
-    currParVels = parVels.(currFieldName);
-    avgVels(region) = mean(currParVels);
-    RMSD(region) = sqrt((1/(length(currParVels)-1))*sum((currParVels-avgVels(region)).^2));
-    regionMidPts(region) = (((region-1)*(regionInterval))+(region*regionInterval))/2;
+    numDataDist(1,region) = length(parVels.(currFieldName));
 end
+%% Extract Avg Velocities From ParVels Structure (To Compare with Peaks of Distributions)
+    avgVels = zeros(1,numRegions);
+    avgV_Error= avgVels;
+    for region = 1:numRegions
+        currFieldName = ['RegionNum_' num2str(region)];
+        currParVels = parVels.(currFieldName);
+        avgVels(region) = mean(currParVels);
+        avgV_Error(region) = sqrt((1/(length(currParVels)-1))*sum((currParVels-avgVels(region)).^2));
+        avgV_Error(region) = avgV_Error(region)/sqrt(numDataDist(region));
+    end
     scale = diff(avgVels);
     avgScale = mean(scale);
     figure(1);
-    errorbar(regionMidPts,avgVels,RMSD);
+    errorbar(regionMidPts,avgVels,avgV_Error);
     title('Average Velocity versus Region Separation Distance'); 
+
 %% Apply horizontal scaling factor correction to parVels Structure
-for region = 1:numRegions
-   currFieldName = ['RegionNum_' num2str(region)];
-   parVels.(currFieldName) = parVels.(currFieldName) + (avgScale * region);
-end
+% for region = 1:numRegions
+%    currFieldName = ['RegionNum_' num2str(region)];
+%    parVels.(currFieldName) = parVels.(currFieldName) + (avgScale * region);
+% end
 %% Extract vertical scaling factor correction to parVels Structure
 % crude vertical scaling where scaling factor is based on number of
 % velocities in distribution
@@ -93,13 +101,13 @@ plotOpt = 1;
 %^determines whether gaussian fit will be plotted; 0: no gaussian fit, 1:gaussian fit
 numBins = 50;
 
-%Determine Number of data sets for each region and bin
-numDataDist = zeros(1,numRegions);
+%Determine Number of data sets for each bin
 numDataBin = zeros(numBins-1,numRegions); 
 peaks = zeros(1,numRegions);
+peakError = peaks;
 for region = 1:numRegions
     currFieldName = ['RegionNum_' num2str(region)];
-    edges = linspace(-1,1,numBins);
+    edges = linspace(-2,2,numBins);
     N = histcounts(parVels.(currFieldName),edges);
     
     N_scaled = N/verScaleFactor(region,1);
@@ -109,6 +117,8 @@ for region = 1:numRegions
         f = fit(mean([edges(1:end-1);edges(2:end)])',N_scaled','gauss1');
         plot(f,'r',mean([edges(1:end-1);edges(2:end)]),N_scaled);
         peaks(1,region) = f.b1;
+        peakError(1,region) = f.c1;
+        xlim([-2,2]);
     elseif plotOpt == 2
         f = fit(mean([edges(1:end-1);edges(2:end)])',N_scaled','gauss2');
         plot(f,'r',mean([edges(1:end-1);edges(2:end)]),N_scaled);
@@ -121,12 +131,13 @@ for region = 1:numRegions
     upperBound = region*regionInterval;
     title([num2str(lowerBound) ' to ' num2str(upperBound) ' microns']);
     
-    numDataDist(1,region) = length(parVels.(currFieldName));
+    
     numDataBin(:,region) = N';
+    peakError(1,region) = peakError(1,region)/sqrt(numDataDist(1,region));
 end    
 %     histogram(parVels,linspace(-outerBinEdge,outerBinEdge,numBins));    
     figure(region+1);
-    errorbar(regionMidPts,avgVels,RMSD);
+    errorbar(regionMidPts,avgVels,avgV_Error);
     title('Average Velocity versus Region Separation Distance');    
 %% Overlay all distributions 
 numBins = 50;
@@ -201,6 +212,10 @@ hold off;
 %% Plot Peaks for Each Distribution
 figure(region + 4)
 hold on 
-scatter(regionMidPts,peaks);
+errorbar(regionMidPts,peaks,peakError,'.');
 title('Peak of Each Distribution');
+xlabel('Parallel Separation Distance (um)');
+ylabel('Peak Value of Par Vel Distributions(um/s)');
+fit = polyfit(regionMidPts,peaks,1);
+plot(regionMidPts,(fit(1,1)*regionMidPts + fit(1,2)));
 hold off
