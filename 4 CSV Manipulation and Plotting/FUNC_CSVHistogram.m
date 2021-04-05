@@ -33,8 +33,15 @@ if nargin == 2
         %Search for outlier data and update edges if necessary
         if ( max(currFieldVals) > maxBin || min(currFieldVals) < minBin )
             [edges,isNewMat] = updateEdges(currFieldVals, edges, binWidth);
+            %Check to see if edges upperbound was raised -> get index of
+            %last old entry before updating sumN
+            if max(currFieldVals) > maxBin
+                old2New = find(diff(isNewMat) == -1);
+            else
+                old2New = numel(isNewMat);
+            end
             updatedN = zeros(1,numel(isNewMat(2:end)));
-            updatedN(isNewMat(2:end)) = sumN;
+            updatedN(isNewMat(1:old2New-1)) = sumN;
         else
             updatedN = sumN;
         end

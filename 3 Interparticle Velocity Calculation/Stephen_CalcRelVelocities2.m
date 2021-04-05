@@ -1,4 +1,4 @@
-function rawdata=Stephen_CalcRelVelocities2(DataSet)
+function [dupCount,ds]=Stephen_CalcRelVelocities2(directory,analysisDir,csvName)
 % This program measures the interframe velocity between rod pairs!
 % For example, the program will find all of the rods which appear in consecutive frames (conserved particle IDs)
 % and then calculates the relative velocities between those pairs.
@@ -26,36 +26,42 @@ function rawdata=Stephen_CalcRelVelocities2(DataSet)
 
 dt=1; %Set the inter-frame time-step over which velocities are measured IN Delta-FRAMES!!!! NOT SECONDS.
 %This can help with smoothing velocities by measuring them over slightly large time steps.
-
+dupCount = 1;
 
 %%
-% % Prepare a variable on the disk to save to periodically to speed things up
-% % and prevent memory issues. This will be a datastore.
-% % make new directory for saving data.  This will be a datastore for analysis.
-% analysisdir=strcat(directory,'\AnalysisDirectory3');   mkdir(analysisdir);
-% savename=strcat(analysisdir,'\AnalysisDatachange2.csv');
-% 
-% % Write the File Headers to the csv file.
-% fileID= fopen(savename, 'w');
-% % Output this:  [Rsep RelAngle DeltaA DeltaS DeltaVx DeltaVy Vpara Vperp];
-% fprintf(fileID,'%12s, %12s, %12s, %12s, %12s, %12s \n',...
-%     'Rsep', 'RelAngle', 'DeltaA', 'Vx', 'Vy','time');
-% fclose(fileID);
-% 
-% % Save every X frames.
-% DumpEvery=200;
+%Prepare a variable on the disk to save to periodically to speed things up
+%and prevent memory issues. This will be a datastore.
+%make new directory for saving data.  This will be a datastore for analysis.
+analysisdir=fullfile(directory,analysisDir);   mkdir(analysisdir);
+savename=strcat(analysisdir,'\',csvName,'.csv');
 
+%Write the File Headers to the csv file.
+fileID= fopen(savename, 'w');
+%Output this:  [Rsep RelAngle DeltaA DeltaS DeltaVx DeltaVy Vpara Vperp];
+fprintf(fileID,...
+    '%12s, %12s, %12s, %12s, %12s, %12s, %12s, %12s, %12s, %12s, %12s, %12s, %12s, %12s, %12s, %12s, %12s, %12s \n',...
+    'Rsep', 'RelAngle', 'DeltaA', 'Vx', 'Vy','time', 'X1', 'Y1','XPar1', 'XPerp1',...
+    'X2', 'Y2', 'XPar2', 'XPerp2', 'Vx1','Vy1', 'Vx2', 'Vy2');
+fclose(fileID);
 
+%Save every X frames.
+DumpEvery=200;
 
+%%
+%LOAD TRACKS DATA
+trStruct = load(strcat(directory,'\tracks.mat'));  %THIS CONTAINS tr
+fields = cell2mat(fieldnames(trStruct));
+tr = trStruct.(fields);
 
 %Sort the incoming data by frame number.
-TrackData = sortrows(DataSet,3); %sort by frame #
+TrackData = sortrows(tr,3); %sort by frame #
 u = unique(TrackData(:,3));  %unique FRAME #s
 endframe=size(u,1)-dt;
 
-
+h = waitbar(0,'Calculating Interframe Rod Pair Data');
 rawdata=[];
-for i=1:endframe
+for i=1:endframe;
+    waitbar(i/endframe,h);
     
     Ind1=[]; Ind2=[];  %CLEAR OUT SHIT!
     rows1=[]; rows2=[]; IDs1=[]; IDs2=[];
@@ -88,11 +94,26 @@ for i=1:endframe
         %Find the ID#s which are the same in Both frames in order to compare
         %interframe velocities.  Make Combos out of all these.
         
+                
+
         %Gather the Indices of the XY positions for Particle 1&2 at times 1&2.
-        for j=1:size(combos,1);
-            Ind1(j,1:2)=[ find(Data1(:,5)==combos(j,1))  find(Data1(:,5)==combos(j,2)) ]; %Index [Particle1 Particle2] at time1
-            Ind2(j,1:2)=[ find(Data2(:,5)==combos(j,1))  find(Data2(:,5)==combos(j,2)) ]; %Index [Particle1 Particle2] at time2
+        for j=1:size(combos,1)
+            try
+                Ind1(j,1:2)=[ find(Data1(:,5)==combos(j,1))  find(Data1(:,5)==combos(j,2)) ]; %Index [Particle1 Particle2] at time1
+                Ind2(j,1:2)=[ find(Data2(:,5)==combos(j,1))  find(Data2(:,5)==combos(j,2)) ]; %Index [Particle1 Particle2] at time2
+            catch
+            Ind1(j,1:2)=[ min(find(Data1(:,5)==combos(j,1)))  min(find(Data1(:,5)==combos(j,2))) ]; %Index [Particle1 Particle2] at time1
+            Ind2(j,1:2)=[ min(find(Data2(:,5)==combos(j,1)))  min(find(Data2(:,5)==combos(j,2))) ]; %Index [Particle1 Particle2] at time2
+            dupCount = dupCount + 1;
+            end
         end
+        
+        % OG.
+%         %Gather the Indices of the XY positions for Particle 1&2 at times 1&2.
+%         for j=1:size(combos,1);
+%             Ind1(j,1:2)=[ find(Data1(:,5)==combos(j,1))  find(Data1(:,5)==combos(j,2)) ]; %Index [Particle1 Particle2] at time1
+%             Ind2(j,1:2)=[ find(Data2(:,5)==combos(j,1))  find(Data2(:,5)==combos(j,2)) ]; %Index [Particle1 Particle2] at time2
+%         end
         
         % Vx' = Vx Cos(theta) - Vy Sin(theta)
         % Vy' = Vx Sin(theta) + Vy Cos(theta)
@@ -127,9 +148,14 @@ for i=1:endframe
         % Separation between rods in pixels (r).
         Rsep= sqrt( ( P2t2(:,1) - P1t2(:,1) ).^2 + ( P2t2(:,2) - P1t2(:,2) ).^2 ) ;
         
-        %Relative Velocities (components.
-        Vx=  (( P2t2(:,1) - P1t2(:,1) ) - ( P2t1(:,1) - P1t1(:,1) ) )./ (abs(frame2-frame1)) ;
-        Vy=  (( P2t2(:,2) - P1t2(:,2) ) - ( P2t1(:,2) - P1t1(:,2) ) )./ (abs(frame2-frame1)) ;
+        %Velocity components
+        Vx1 = (P1t2(:,1) - P1t1(:,1)) ./ (abs(frame2-frame1));
+        Vx2 = (P2t2(:,1) - P2t1(:,1)) ./ (abs(frame2-frame1));
+        Vy1 = (P1t2(:,2) - P1t1(:,2)) ./ (abs(frame2-frame1));
+        Vy2 = (P2t2(:,2) - P2t1(:,2)) ./ (abs(frame2-frame1));
+        %Relative Velocities
+        Vx=  Vx2 - Vx1;
+        Vy=  Vy2 - Vy1;
         
 %         Vx=  (( P2t2(:,1) - P2t1(:,1) ) - ( P1t2(:,1) - P1t1(:,1) ) )./ (abs(frame2-frame1)) ;
 %         Vy=  (( P2t2(:,2) - P2t1(:,2) ) - ( P1t2(:,2) - P1t1(:,2) ) )./ (abs(frame2-frame1)) ;
@@ -149,31 +175,32 @@ for i=1:endframe
         time=frame1.*ones(size(Rsep,1),1);
         
         % concatenate them into a local variable to save a few at a time.
-        rawdata = [rawdata ; Rsep RelAngle DeltaA Vx Vy time];
+        rawdata = [rawdata ; Rsep RelAngle DeltaA Vx Vy time ...
+            Data1(Ind1(:,1),1) Data1(Ind1(:,1),2) P1t1(:,1) P1t1(:,2) ...
+            Data1(Ind1(:,2),1) Data1(Ind1(:,2),2) P2t1(:,1) P2t1(:,2) ...
+            Vx1 Vy1 Vx2 Vy2 ];
         
     end
     
     %Save the data every X iterations to a csv file.
-%     if mod(i,DumpEvery)==0;
-%         dlmwrite(savename,rawdata,'-append');
-%         %secondpt=size(rawdata,1)+firstpt-1; %set the first index.
-%         %m.rawdata(firstpt:secondpt,1:8) = rawdata;  %append the disk variable rawdata.
-%         %firstpt=secondpt+1; %incriment the saving matrix index.
-%         rawdata=[];
-%     elseif i==endframe;
-%         dlmwrite(savename,rawdata,'-append');
-%         %secondpt=size(rawdata,1)+firstpt-1; %set the first index.
-%         %m.rawdata(firstpt:secondpt,1:8) = rawdata;  %append the disk variable rawdata.
-%         %firstpt=secondpt+1; %incriment the saving matrix index.
-%         rawdata=[];
-%     end
+    if mod(i,DumpEvery)==0;
+        dlmwrite(savename,rawdata,'-append');
+        %secondpt=size(rawdata,1)+firstpt-1; %set the first index.
+        %m.rawdata(firstpt:secondpt,1:8) = rawdata;  %append the disk variable rawdata.
+        %firstpt=secondpt+1; %incriment the saving matrix index.
+        rawdata=[];
+    elseif i==endframe;
+        dlmwrite(savename,rawdata,'-append');
+        %secondpt=size(rawdata,1)+firstpt-1; %set the first index.
+        %m.rawdata(firstpt:secondpt,1:8) = rawdata;  %append the disk variable rawdata.
+        %firstpt=secondpt+1; %incriment the saving matrix index.
+        rawdata=[];
+    end
     
 end
 
 
-
-% ds=datastore(savename);
-
+ds=datastore(savename);
 
 
 

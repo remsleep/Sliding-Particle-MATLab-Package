@@ -1,4 +1,4 @@
-%% Define scalings, if necessary
+    %% Define scalings, if necessary
 close all
 pixelConv = 6.5*2/100;       %%In um/pix
 timeConv = 0.35;        %%In seconds/frame

@@ -73,8 +73,10 @@ while hasdata(dataStore)
     
 end
     %Save remaining data
-    dlmwrite(outLoc,table2array(toSaveData),'-append');
-    toSaveData = [];
+    if ~isempty(toSaveData)
+        dlmwrite(outLoc,table2array(toSaveData),'-append');
+        toSaveData = [];
+    end
     
     %Clean up by deleting any temp files
     dataLoc = fullfile(ogDir,ogName);

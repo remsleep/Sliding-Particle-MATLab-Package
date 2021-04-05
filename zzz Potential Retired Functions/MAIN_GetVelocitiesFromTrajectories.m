@@ -3,24 +3,27 @@
 % currDir = [baseDir, num2str(currBatch)];
 % load(fullfile(currDir,'trajectoryData.mat'));
 %Define scalings, if necessary
-directory = 'C:\Users\Rémi Boros\OneDrive\Documents\MATLAB\Lemma MT Tracking Code\Sliding-Particle-MATLab-Package\Stephen Linnea Old Velocities';
-fileName = 'First3Trajs_AnalysisDataChange_Remi.csv';
-analysisDir = 'First3Trajs';
+directory = 'E:\Two Channel Nematic\Linnea Data\forRemi\Batch1';
+fileName = 'Batch1_Linnea_LHAnalysis.csv';
+analysisDir = 'LH Analysis';
 pixelConv = 6.5*2/100;      %%In um/pix
 timeConv = 0.35;            %%In seconds/frame
 WINDOW = 2;                 %%Window of integration for which velocities are calculated
 angleCutOff = 360;           %%Max angle in degrees allowed between MTs
-ySize = 1280;
+ySize = 1080;
 binSize = 10;
 load(fullfile(directory, 'tracks.mat'));
 tr = tr';
+
+%% Convert trajectory struct to tracks array
+
 
 %% Calculate velocities; assums [x, y, frame, orientation, ID] array structure
 first3 = max(find(tr(5,:)==3));
 tr3 = tr(:,1:first3);
 disp('Calculating velocities...')
 tic
-[finalData,truncData] = FUNC_FindVelocityDifferencesSameChannelFromArray(tr,pixelConv,timeConv, deg2rad(angleCutOff);
+[finalData,truncData] = FUNC_FindVelocityDifferencesSameChannelFromArray(tr,pixelConv,timeConv, deg2rad(angleCutOff));
 % velInfo = FUNC_FindVelocityFromArray(tr1000, WINDOW, pixelConv, timeConv);
 % velInfo = FUNC_FindVelocityFromArray(tr, 1, 1);
 toc

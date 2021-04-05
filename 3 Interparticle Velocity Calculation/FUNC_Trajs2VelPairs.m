@@ -2,11 +2,15 @@ function [outData] = FUNC_Trajs2VelPairs(dataDir,outDir,csvName,dt, pixelConv, t
 %FUNC_TRAJS2VELPAIRS This function takes in a directory DATADIR where it
 %can search for a file named tracks.mat. This file should constitute a Nx5
 %or Nx6 array, with columns corresponding to
-%[x,y,frame,orientation,ID,channel]. Alternatively, the array can be passed
+%     [x,y,frame,orientation,ID,channel]. 
+%Alternatively, the array can be passed
 %directly as an argument in place of DATADIR. OUTDIR is the full directory
 %where the outputted data will be saved in a csv file named CSVNAME.csv.
 %The function will also return the velocity pairs with all other associated
-%data as the array OUTDATA: [
+%data as the array OUTDATA: 
+% ['Rsep', 'RelAngle', 'DeltaA', 'Vpar', 'Vperp', 'VRelpar', 'VRelperp', 
+% ... 'Time', 'ParSep','PerpSep', 'Ch1', 'Ch2', 'Ch1_Ch2']
+
 %DT is a time step over which velocities are calculated. The default time
 %step should be 1, but can be increased to average over larger time steps.
 
@@ -39,8 +43,9 @@ savename=fullfile(outDir, [csvName,'.csv']);
 fileID= fopen(savename, 'w');
 %Output this:  [Rsep RelAngle DeltaA DeltaS DeltaVpar DeltaVperp Vpara Vperp];
 fprintf(fileID,...
-    '%12s, %12s, %12s, %12s, %12s, %12s, %12s, %12s , %12s, %12s, %12s \n',...
-    'Rsep', 'RelAngle', 'DeltaA', 'Vpar', 'Vperp', 'Time', 'ParSep', 'PerpSep', 'Ch1', 'Ch2', 'Ch1_Ch2');
+    '%12s, %12s, %12s, %12s, %12s, %12s, %12s, %12s , %12s, %12s, %12s, %12s, %12s \n',...
+    'Rsep', 'RelAngle', 'DeltaA', 'Vpar', 'Vperp', 'VRelpar', 'VRelperp', ...
+    'Time', 'ParSep', 'PerpSep', 'Ch1', 'Ch2', 'Ch1_Ch2');
 fclose(fileID);
 
 %Save every X frames.
@@ -49,8 +54,8 @@ DumpEvery=200;
 %Load trajectory data if dataDir is not a data array
 if size(dataDir,1) < 5
     trStruct = load(fullfile(dataDir,'tracks.mat'));  
-    fields = cell2mat(fieldnames(trStruct));
-    ogData = trStruct.(fields);
+    fields = fieldnames(trStruct);
+    ogData = trStruct.(fields{1});
 else
     ogData = dataDir;
 end
@@ -82,7 +87,7 @@ for currFrame=1:endFrame
     P1t1=[]; P1t2=[]; P2t1=[]; P2t2=[];
     Vpar=[]; Vperp=[]; Rsep=[]; RelAngle=[]; time=[]; DeltaA=[];
     
-    %advance the frame numbers over which V is calcualted.
+    %advance the frame numbers over which V is calculated.
     frame1=uniqueData(currFrame);
     frame2=uniqueData(currFrame+dt);
     
@@ -96,8 +101,8 @@ for currFrame=1:endFrame
     Data2=TrackData(rows2,:);    %FRAME 2
     
     %Very rough patch: removal of double trajectories within the same frame
-    excData1 = ( diff(Data1(:,5)) == 0 ); 
-    excData2 = ( diff(Data2(:,5)) == 0 );
+    excData1 = logical([0; ( diff(Data1(:,5)) == 0 )]); 
+    excData2 = logical([0; ( diff(Data2(:,5)) == 0 )]);
     Data1 = Data1(~excData1,:); Data2 = Data2(~excData2,:);
     
     %Iterate through channels to assign unique IDs to all objects, if there
@@ -199,7 +204,7 @@ for currFrame=1:endFrame
         chComb = ch1 + ch2;
         
         % Concatenate data into a local variable to save
-        rawdata = [rawdata ; Rsep RelAngle DeltaA Vpar Vperp time ParSep PerpSep ch1 ch2 chComb];
+        rawdata = [rawdata ; Rsep RelAngle DeltaA Vpar Vperp Vpar Vperp time ParSep PerpSep ch1 ch2 chComb];
         
         
     end
@@ -207,18 +212,18 @@ for currFrame=1:endFrame
     %Save the data every X iterations to a csv file.
     if mod(currFrame,DumpEvery)==0
         %Convert units from pixels and frames to um and seconds
-        rawdata(:,[1 4 5 7 8]) = rawdata(:,[1 4 5 7 8]) * pixelConv;
-        rawdata(:,4:5) = rawdata(:,4:5) / timeConv;
-        rawdata(:,6) = rawdata(:,6) * timeConv;
+        rawdata = convertUnits(rawdata, pixelConv, timeConv);
+        %Flip velocities in relative frame of reference microtubule (ext. vs cont. relative velocities)
+        rawdata(:,6:7) = rawdata(:,6:7).*sign(rawdata(:,9:10));
         %Save data
         dlmwrite(savename,rawdata,'-append');
         outData = [outData; rawdata];
         rawdata=[];
     elseif currFrame==endFrame
         %Convert units from pixels and frames to um and seconds
-        rawdata(:,[1 4 5 7 8]) = rawdata(:,[1 4 5 7 8]) * pixelConv;
-        rawdata(:,4:5) = rawdata(:,4:5) / timeConv;
-        rawdata(:,6) = rawdata(:,6) * timeConv;
+        rawdata = convertUnits(rawdata, pixelConv, timeConv);
+        %Flip velocities in relative frame of reference microtubule (ext. vs cont. relative velocities)
+        rawdata(:,6:7) = rawdata(:,6:7).*sign(rawdata(:,9:10));
         %Save data
         dlmwrite(savename,rawdata,'-append');
         outData = [outData; rawdata];
@@ -229,3 +234,10 @@ end
 close(progBar);
 end
 
+function [rawdata] = convertUnits(rawdata, pixelConv, timeConv)
+% Converts units of appropriate columns based on given time and pixel
+% conversion values
+    rawdata(:,[1 4 5 6 7 9 10]) = rawdata(:,[1 4 5 6 7 9 10]) * pixelConv;
+    rawdata(:,4:7) = rawdata(:,4:7) / timeConv;
+    rawdata(:,8) = rawdata(:,8) * timeConv;
+end

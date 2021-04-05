@@ -2,6 +2,14 @@
 csvName = 'CombinedData';
 combinedDir = 'C:\Users\judem\Documents\SlidingMTData';
 dataLoc = fullfile(combinedDir,csvName);
+<<<<<<< HEAD
+%% Stitch Different Data Sets Together
+savename = fullfile(combinedDir,csvName);
+numSets = 0;
+for set = 1:numSets
+    setname = fullfile(combinedDir, [csvName '(' num2str(set) ')']);
+    JUDE_StitchDatSets(savename,setname);
+=======
 %% Stitch Velocity Data Sets Together
 %if there are multiple data sets that should be analyzed together, this
 %section stitches the data sets together so that they can be analyzed as
@@ -11,6 +19,7 @@ numDataSets = 0;
 for dataSet = 1:numDataSets
     dataName = fullfile(combinedDir,[csvName '_' num2str(dataSet)]);
     Jude_StitchDataSets(saveName,dataName);
+>>>>>>> aada226005e7b77b1cd6c4c18c7a56b64f882119
 end
 %% Switch Velocity Signs
 %ensures negative velocity corresponds to contractile motion while 
@@ -44,6 +53,7 @@ end
 
 %% Create 2 dimensional parVels structure where fields are regions 
 parVels = struct();
+%create array to determine number of data points for each distribution
 
 for region = 1:numRegions
     %creating bounds for region
@@ -101,10 +111,29 @@ plotOpt = 1;
 %^determines whether gaussian fit will be plotted; 0: no gaussian fit, 1:gaussian fit
 numBins = 50;
 
+<<<<<<< HEAD
 %Determine Number of data sets for each bin
 numDataBin = zeros(numBins-1,numRegions); 
 peaks = zeros(1,numRegions);
 peakError = peaks;
+=======
+<<<<<<< HEAD
+%creating array to determine num data points for each distribution and each
+%bin within that distribution
+numDataPerDist = zeros(1,numRegions);
+numDataPerBin = zeros(numBins-1,numRegions);
+
+%create array that stores peaks of each distribution
+peaks = zeros(1,numRegions);
+
+%create bins for each region and plot distribution
+=======
+%Determine Number of data sets for each region and bin
+numDataDist = zeros(1,numRegions);
+numDataBin = zeros(numBins-1,numRegions); 
+peaks = zeros(1,numRegions);
+>>>>>>> aada226005e7b77b1cd6c4c18c7a56b64f882119
+>>>>>>> fa76f408a4cf5ecd71eab27f675946ab7b2dbb1d
 for region = 1:numRegions
     currFieldName = ['RegionNum_' num2str(region)];
     edges = linspace(-2,2,numBins);
@@ -113,6 +142,13 @@ for region = 1:numRegions
     N_scaled = N/verScaleFactor(region,1);
     
     figure(region);
+<<<<<<< HEAD
+    if plotOpt == 1 %single gaussian distribution
+        f = fit(mean([edges(1:end-1);edges(2:end)])',N_scaled','gauss1');
+        plot(f,'r',mean([edges(1:end-1);edges(2:end)]),N_scaled);
+        peaks(1,region) = f.b1;
+    elseif plotOpt == 2 %double gaussian distribution
+=======
     if plotOpt == 1
         f = fit(mean([edges(1:end-1);edges(2:end)])',N_scaled','gauss1');
         plot(f,'r',mean([edges(1:end-1);edges(2:end)]),N_scaled);
@@ -120,9 +156,11 @@ for region = 1:numRegions
         peakError(1,region) = f.c1;
         xlim([-2,2]);
     elseif plotOpt == 2
+>>>>>>> aada226005e7b77b1cd6c4c18c7a56b64f882119
         f = fit(mean([edges(1:end-1);edges(2:end)])',N_scaled','gauss2');
         plot(f,'r',mean([edges(1:end-1);edges(2:end)]),N_scaled);
-    elseif plotOpt == 0
+        
+    elseif plotOpt == 0 % scatter plot
         scatter(mean([edges(1:end-1);edges(2:end)]),N_scaled,'filled');
     end
     
@@ -131,9 +169,19 @@ for region = 1:numRegions
     upperBound = region*regionInterval;
     title([num2str(lowerBound) ' to ' num2str(upperBound) ' microns']);
     
+<<<<<<< HEAD
     
     numDataBin(:,region) = N';
     peakError(1,region) = peakError(1,region)/sqrt(numDataDist(1,region));
+=======
+<<<<<<< HEAD
+    numDataPerDist(1,region) = length(parVels.(currFieldName));
+    numDataPerBin(1:numBins-1,region) = N';
+=======
+    numDataDist(1,region) = length(parVels.(currFieldName));
+    numDataBin(:,region) = N';
+>>>>>>> aada226005e7b77b1cd6c4c18c7a56b64f882119
+>>>>>>> fa76f408a4cf5ecd71eab27f675946ab7b2dbb1d
 end    
 %     histogram(parVels,linspace(-outerBinEdge,outerBinEdge,numBins));    
     figure(region+1);
@@ -168,6 +216,7 @@ end
 
 hold off;
 %% Overlay Gaussian Fits
+plotOpt = 1;
 numBins = 50;
 plotOpt = 1;
 figure(region+3);
@@ -201,7 +250,7 @@ for region = 1:numRegions
     %set color for each distribution and display correct legend name
     fitLine = p(2,1);
     fitLine.Color = color;
-    set(fitLine,'DisplayName',str,'Color',color);
+    fitLine.DisplayName = str;
    
 end
     title('Overlayed Parallel Velocity Gaussian Fits');
@@ -209,13 +258,26 @@ end
     ylabel('normalized frequency');
 
 hold off;
+<<<<<<< HEAD
+%% Plotting Peaks for Each Region
+hold on
+figure(region + 4)
+scatter(regionMidPts,peaks);
+title('Distribution Peaks for Each Region');
+hold off
+=======
 %% Plot Peaks for Each Distribution
 figure(region + 4)
 hold on 
 errorbar(regionMidPts,peaks,peakError,'.');
 title('Peak of Each Distribution');
+<<<<<<< HEAD
 xlabel('Parallel Separation Distance (um)');
 ylabel('Peak Value of Par Vel Distributions(um/s)');
 fit = polyfit(regionMidPts,peaks,1);
 plot(regionMidPts,(fit(1,1)*regionMidPts + fit(1,2)));
 hold off
+=======
+hold off
+>>>>>>> aada226005e7b77b1cd6c4c18c7a56b64f882119
+>>>>>>> fa76f408a4cf5ecd71eab27f675946ab7b2dbb1d
