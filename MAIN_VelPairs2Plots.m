@@ -3,13 +3,6 @@ csvName = 'CombinedData';
 combinedDir = 'C:\Users\judem\Documents\SlidingMTData';
 dataLoc = fullfile(combinedDir,csvName);
 
-%% Stitch Different Data Sets Together
-savename = fullfile(combinedDir,csvName);
-numSets = 0;
-for set = 1:numSets
-    setname = fullfile(combinedDir, [csvName '(' num2str(set) ')']);
-    JUDE_StitchDatSets(savename,setname);
-end
 %% Stitch Velocity Data Sets Together
 %if there are multiple data sets that should be analyzed together, this
 %section stitches the data sets together so that they can be analyzed as
@@ -24,6 +17,9 @@ end
 %ensures negative velocity corresponds to contractile motion while 
 %positive velocity corresponds to extensile motion
 JUDE_SwitchVelocitySign(combinedDir,combinedDir,csvName,[csvName '_SignSwitched']);
+
+%% %%%%%%%%%%%%%%%%%%% FILTERING %%%%%%%%%%%%%%%%%%%%%%%%%
+
 %% Filter Through Data based on Angle
 angleCutOff = deg2rad(10);
 filtCSVName = [csvName '_Filtered'];
@@ -37,7 +33,7 @@ if ChOpt ~= 1
     FUNC_FilterCSVIncl(combinedDir,combinedDir,filtCSVName,filtCSVName,{'Ch1_Ch2'},[ChOpt,ChOpt]);
 end
 %% Filtering to create region with Desired Separation Width
-regionWidth = 2;%in microns
+regionWidth = 4;%in microns
 FUNC_FilterCSVIncl(combinedDir,combinedDir,filtCSVName,filtCSVName,...
     {'PerpSep'},[-regionWidth,regionWidth]);
 %% Define region analysis parameters
@@ -75,8 +71,10 @@ for region = 1:numRegions
     currFieldName = ['RegionNum_' num2str(region)];
     parVels.(currFieldName) = filteredTable.('Vpar');
   
-end   
-%% Extract Amount of Data in Each Region 
+end
+%% %%%%%%%%%%%%%%%%%% MINOR ANALYSIS %%%%%%%%%%%%%%%%%%%%%%%%
+
+%% Extract Amount of Data in Each Region
 numDataDist = zeros(1,numRegions);
 for region = 1:numRegions
     currFieldName = ['RegionNum_' num2str(region)];
@@ -103,14 +101,10 @@ end
 %    currFieldName = ['RegionNum_' num2str(region)];
 %    parVels.(currFieldName) = parVels.(currFieldName) + (avgScale * region);
 % end
-%% Extract vertical scaling factor correction to parVels Structure
-% crude vertical scaling where scaling factor is based on number of
-% velocities in distribution
-verScaleFactor = zeros(numRegions,1);
-for region = 1:numRegions
-    currFieldName = ['RegionNum_' num2str(region)];
-    verScaleFactor(region,1) = length(parVels.(currFieldName));
-end
+
+
+%% %%%%%%%%%%%%%%%%%%%%%%%%% PLOTTING %%%%%%%%%%%%%%%%%%%%%%%%
+
 %% Plot Relative Velocity Distributions for Each Region 
 %%Also Determining Amount of Data in Each Bin and Extacting Peak Values of
 %%Each Distribution
@@ -128,7 +122,7 @@ for region = 1:numRegions
     currFieldName = ['RegionNum_' num2str(region)];
     N = histcounts(parVels.(currFieldName),edges);
     %Applies Vertical Scaling
-    N_scaled = N/verScaleFactor(region,1);
+    N_scaled = N/numDataDist(1,region);
     
     figure(region);
     %Plots based on which fit option user chooses
@@ -162,7 +156,7 @@ for region = 1:numRegions
     currFieldName = ['RegionNum_' num2str(region)];
     N = histcounts(parVels.(currFieldName),edges);
     %applying vertical scaling
-    N_scaled = N/verScaleFactor(region,1);
+    N_scaled = N/numDataDist(1,region);
     
     %Determining Color for Each Gaussian --> progresses as region increases
     color = [1-(region-1)/numRegions,(region-1)/numRegions,(region-1)/numRegions];
@@ -188,7 +182,7 @@ for region = 1:numRegions
     currFieldName = ['RegionNum_' num2str(region)];
     N = histcounts(parVels.(currFieldName),edges);
     %applying vertical scaling
-    N_scaled = N/verScaleFactor(region,1);
+    N_scaled = N/numDataDist(1,region);
     
     %setting color of each distribution
     color = [1-(region-1)/numRegions,0,(region-1)/numRegions];
@@ -227,8 +221,8 @@ hold on
 errorbar(regionMidPts,peaks,peakError,'.');
 xlabel('Parallel Separation Distance (um)');
 ylabel('Peak Value of Par Vel Distributions(um/s)');
-fit = polyfit(regionMidPts,peaks,1);
-slope = fit(1,1);
-plot(regionMidPts,(fit(1,1)*regionMidPts + fit(1,2)));
+linearFit = polyfit(regionMidPts,peaks,1);
+slope = linearFit(1,1);
+plot(regionMidPts,(linearFit(1,1)*regionMidPts + linearFit(1,2)));
 title(['Peak of Each Distribution. Slope: ' num2str(slope)]);
 hold off
