@@ -42,13 +42,19 @@ FUNC_FilterCSVIncl(combinedDir,combinedDir,filtCSVName,filtCSVName,...
     {'PerpSep'},[-regionWidth,regionWidth]);
 %% Define region analysis parameters
 numRegions = 10;
-regionInterval = 4;%in microns
-regionDir = fullfile(combinedDir,'RegionComparison');
-mkdir(regionDir);
+regionInterval = 5;%in microns
+numBins = 50;
+edge = 1;%determines how far farthest bin is from zero
+edges = linspace(-edge,edge, numBins);
 regionMidPts = zeros(1,numRegions);
 for region = 1:numRegions
     regionMidPts(region) = (((region-1)*(regionInterval))+(region*regionInterval))/2;
 end
+
+%Making Directory to Store CSV for Each Distribution
+regionDir = fullfile(combinedDir,'RegionComparison');
+mkdir(regionDir);
+
 
 %% Create 2 dimensional parVels structure where fields are regions 
 parVels = struct();
@@ -70,7 +76,7 @@ for region = 1:numRegions
     parVels.(currFieldName) = filteredTable.('Vpar');
   
 end   
-%% Extract Amount of Data in Each Region
+%% Extract Amount of Data in Each Region 
 numDataDist = zeros(1,numRegions);
 for region = 1:numRegions
     currFieldName = ['RegionNum_' num2str(region)];
@@ -105,124 +111,89 @@ for region = 1:numRegions
     currFieldName = ['RegionNum_' num2str(region)];
     verScaleFactor(region,1) = length(parVels.(currFieldName));
 end
-%% Plot Relative Velocity Distributions for Each Region
+%% Plot Relative Velocity Distributions for Each Region 
+%%Also Determining Amount of Data in Each Bin and Extacting Peak Values of
+%%Each Distribution
 plotOpt = 1;
-%^determines whether gaussian fit will be plotted; 0: no gaussian fit, 1:gaussian fit
-numBins = 50;
+%^determines whether gaussian fit will be plotted; 0: no gaussian fit,
+%1:gaussian fit
 
-
-%Determine Number of data sets for each bin
+%Initializing Arrays
 numDataBin = zeros(numBins-1,numRegions); 
 peaks = zeros(1,numRegions);
 peakError = peaks;
 
-
-%creating array to determine num data points for each distribution and each
-%bin within that distribution
-numDataPerDist = zeros(1,numRegions);
-numDataPerBin = zeros(numBins-1,numRegions);
-
-%create array that stores peaks of each distribution
-peaks = zeros(1,numRegions);
-
 %create bins for each region and plot distribution
-
-%Determine Number of data sets for each region and bin
-numDataDist = zeros(1,numRegions);
-numDataBin = zeros(numBins-1,numRegions); 
-peaks = zeros(1,numRegions);
-
 for region = 1:numRegions
     currFieldName = ['RegionNum_' num2str(region)];
-    edges = linspace(-2,2,numBins);
     N = histcounts(parVels.(currFieldName),edges);
-    
+    %Applies Vertical Scaling
     N_scaled = N/verScaleFactor(region,1);
     
     figure(region);
-
+    %Plots based on which fit option user chooses
     if plotOpt == 1
         f = fit(mean([edges(1:end-1);edges(2:end)])',N_scaled','gauss1');
         plot(f,'r',mean([edges(1:end-1);edges(2:end)]),N_scaled);
         peaks(1,region) = f.b1;
         peakError(1,region) = f.c1;
+        peakError(1,region) = peakError(1,region)/sqrt(numDataDist(1,region));
         xlim([-2,2]);
     elseif plotOpt == 2
-
         f = fit(mean([edges(1:end-1);edges(2:end)])',N_scaled','gauss2');
         plot(f,'r',mean([edges(1:end-1);edges(2:end)]),N_scaled);
-        
     elseif plotOpt == 0 % scatter plot
         scatter(mean([edges(1:end-1);edges(2:end)]),N_scaled,'filled');
     end
     
-    
+    %Creating Plot Title
     lowerBound = (region-1)*regionInterval;
     upperBound = region*regionInterval;
     title([num2str(lowerBound) ' to ' num2str(upperBound) ' microns']);
     
-
-    
+    %N gives amount of data points for each bin for a given distribution
     numDataBin(:,region) = N';
-    peakError(1,region) = peakError(1,region)/sqrt(numDataDist(1,region));
-
-
-    numDataPerDist(1,region) = length(parVels.(currFieldName));
-    numDataPerBin(1:numBins-1,region) = N';
-
-    numDataDist(1,region) = length(parVels.(currFieldName));
-    numDataBin(:,region) = N';
-
 end    
-%     histogram(parVels,linspace(-outerBinEdge,outerBinEdge,numBins));    
-    figure(region+1);
-    errorbar(regionMidPts,avgVels,avgV_Error);
-    title('Average Velocity versus Region Separation Distance');    
 %% Overlay all distributions 
-numBins = 50;
 figure(region+2);
 hold on;
 legendNames = cell(1,numRegions);
 for region = 1:numRegions
     currFieldName = ['RegionNum_' num2str(region)];
-    edges = linspace(-1,1,numBins);
     N = histcounts(parVels.(currFieldName),edges);
-    
+    %applying vertical scaling
     N_scaled = N/verScaleFactor(region,1);
     
-    
-%     if ((region == 1) || (region == numRegions))
+    %Determining Color for Each Gaussian --> progresses as region increases
     color = [1-(region-1)/numRegions,(region-1)/numRegions,(region-1)/numRegions];
-    scatter(mean([edges(1:end-1);edges(2:end)]),N_scaled,'filled','MarkerFaceColor',color);
-%     end
     
+    %Plotting Each Scatter Plot One at a Time
+    scatter(mean([edges(1:end-1);edges(2:end)]),N_scaled,'filled','MarkerFaceColor',color);
+
+    %Creating Legend Names
     lowerBound = (region-1)*regionInterval;
     upperBound = region*regionInterval;
-    
     str = [num2str(lowerBound), ' to ',num2str(upperBound),' microns'];
     legendNames{region} = join(str);
 end
     title('Overlayed Parallel Velocity Distributions');
     legend(legendNames);
-
 hold off;
 %% Overlay Gaussian Fits
-plotOpt = 1;
-numBins = 50;
 plotOpt = 1;
 figure(region+3);
 hold on;
 legendNames = strings(1,numRegions);
 for region = 1:numRegions
-    %bin data based on parallel relative velocity
     currFieldName = ['RegionNum_' num2str(region)];
-    edges = linspace(-1,1,numBins);
     N = histcounts(parVels.(currFieldName),edges);
-    
+    %applying vertical scaling
     N_scaled = N/verScaleFactor(region,1);
+    
+    %setting color of each distribution
     color = [1-(region-1)/numRegions,0,(region-1)/numRegions];
     
-    %find gaussian fit
+    %find gaussian fit based on plotOpt
     if plotOpt == 1
         f = fit(mean([edges(1:end-1);edges(2:end)])',N_scaled','gauss1');
     elseif plotOpt == 2
@@ -250,24 +221,14 @@ end
 
 hold off;
 
-%% Plotting Peaks for Each Region
-hold on
-figure(region + 4)
-scatter(regionMidPts,peaks);
-title('Distribution Peaks for Each Region');
-hold off
-
 %% Plot Peaks for Each Distribution
 figure(region + 4)
 hold on 
 errorbar(regionMidPts,peaks,peakError,'.');
-title('Peak of Each Distribution');
-
 xlabel('Parallel Separation Distance (um)');
 ylabel('Peak Value of Par Vel Distributions(um/s)');
 fit = polyfit(regionMidPts,peaks,1);
+slope = fit(1,1);
 plot(regionMidPts,(fit(1,1)*regionMidPts + fit(1,2)));
+title(['Peak of Each Distribution. Slope: ' num2str(slope)]);
 hold off
-
-hold off
-
