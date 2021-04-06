@@ -37,7 +37,8 @@ end
 %and prevent memory issues. This will be a datastore.
 %make new directory for saving data.  This will be a datastore for analysis.
 mkdir(outDir);
-savename=fullfile(outDir, [csvName,'.csv']);
+csvName = FUNC_checkAppendCSV(csvName);
+savename=fullfile(outDir, csvName);
 
 %Write the File Headers to the csv file.
 fileID= fopen(savename, 'w');

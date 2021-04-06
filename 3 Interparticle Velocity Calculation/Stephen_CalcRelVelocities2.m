@@ -50,8 +50,8 @@ DumpEvery=200;
 %%
 %LOAD TRACKS DATA
 trStruct = load(strcat(directory,'\tracks.mat'));  %THIS CONTAINS tr
-fields = cell2mat(fieldnames(trStruct));
-tr = trStruct.(fields);
+fields = (fieldnames(trStruct));
+tr = trStruct.(fields{1});
 
 %Sort the incoming data by frame number.
 TrackData = sortrows(tr,3); %sort by frame #

@@ -3,14 +3,14 @@
 % currDir = [baseDir, num2str(currBatch)];
 % load(fullfile(currDir,'trajectoryData.mat'));
 %Define scalings, if necessary
-directory = 'C:\Users\Rémi Boros\OneDrive\Documents\MATLAB\Lemma MT Tracking Code\Sliding-Particle-MATLab-Package\Stephen Linnea Old Velocities';
-fileName = 'FullLinneaData';
-analysisDir = 'FullLinneaData';
+directory = 'E:\Two Channel Nematic\Linnea Data\forRemi\Linnea Original Data';
+fileName = 'LinneaOg_Stephen';
+analysisDir = 'LinneaOg_Stephen';
 pixelConv = 6.5*2/100;      %%In um/pix
 timeConv = 0.35;            %%In seconds/frame
 WINDOW = 2;                 %%Window of integration for which velocities are calculated
 angleCutOff = 10;           %%Max angle in degrees allowed between MTs
-ySize = 1280;
+ySize = 1080;
 binSize = 10;
 
 %% Calculate velocities; assumes [x, y, frame, orientation, ID] array structure

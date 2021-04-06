@@ -72,17 +72,22 @@ while hasdata(dataStore)
     end
     
 end
-    %Save remaining data
-    if ~isempty(toSaveData)
-        dlmwrite(outLoc,table2array(toSaveData),'-append');
-        toSaveData = [];
-    end
-    
-    %Clean up by deleting any temp files
-    dataLoc = fullfile(ogDir,ogName);
-    if strcmp(dataLoc, outLoc)
-        delete(tempDataLoc);
-    end
+
+%Save remaining data
+if ~isempty(toSaveData)
+    dlmwrite(outLoc,table2array(toSaveData),'-append');
+    toSaveData = [];
+end
+
+%Clean up by deleting any temp files
+dataLoc = fullfile(ogDir,ogName);
+if strcmp(dataLoc, outLoc)
+    delete(tempDataLoc);
+end
+
+% Add a delay to prevent thread hiccups
+fclose('all')
+
 end
 
 %% Additional Functions

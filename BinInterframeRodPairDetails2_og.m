@@ -32,9 +32,9 @@ w = warning ('off','all');
 %warning(w);
 
 %% Set Filenames and directories
-analysisdir=strcat(directory,'');
-datastorename=strcat(analysisdir,'\LinneaOgVelPairs_unscaled_forLinneaBinScript.csv');
-savename2=strcat(analysisdir,'');
+analysisdir=strcat(directory,'\AnalysisDirectory3');
+datastorename=strcat(analysisdir,'\AnalysisDatachange2.csv');
+savename2=strcat(analysisdir,'\AnalysisVx.mat');
 
 %delete the old analysis.mat file (NOT CSV) in case of appending.
 if exist(savename2,'file')==2 ;
@@ -42,10 +42,7 @@ if exist(savename2,'file')==2 ;
 end
 
 %Load old settings.  This should contain the imsize and other needed parts.
-% load(strcat(directory,'\Particle_Tracking_Settings.mat'));
-imsize = 1080;
-timestep = 0.35;
-PixCal = 6.5*2/100;
+load(strcat(directory,'\Particle_Tracking_Settings.mat'));
 
 %make datastore out of the analysis data.
 ds=datastore(datastorename);
