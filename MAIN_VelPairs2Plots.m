@@ -33,12 +33,12 @@ if ChOpt ~= 1
     FUNC_FilterCSVIncl(combinedDir,combinedDir,filtCSVName,filtCSVName,{'Ch1_Ch2'},[ChOpt,ChOpt]);
 end
 %% Filtering to create region with Desired Separation Width
-regionWidth = 4;%in microns
+regionWidth = 2;%in microns
 FUNC_FilterCSVIncl(combinedDir,combinedDir,filtCSVName,filtCSVName,...
     {'PerpSep'},[-regionWidth,regionWidth]);
 %% Define region analysis parameters
 numRegions = 10;
-regionInterval = 5;%in microns
+regionInterval = 2;%in microns
 numBins = 50;
 edge = 1;%determines how far farthest bin is from zero
 edges = linspace(-edge,edge, numBins);
