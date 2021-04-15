@@ -1,56 +1,68 @@
 %% Define Location of CSV File
-csvName = 'CombinedData';
-combinedDir = 'C:\Users\judem\Documents\SlidingMTData';
-dataLoc = fullfile(combinedDir,csvName);
+csvName = 'AlexData';
+MTDataDir = 'C:\Users\judem\Documents\SlidingMTData\AlexDataAnalysis';
+dataLoc = fullfile(MTDataDir,csvName);
 
 %% Stitch Velocity Data Sets Together
 %if there are multiple data sets that should be analyzed together, this
 %section stitches the data sets together so that they can be analyzed as
 %one
-saveName = fullfile(combinedDir,csvName);
+saveName = fullfile(MTDataDir,csvName);
 numDataSets = 0;
 for dataSet = 1:numDataSets
-    dataName = fullfile(combinedDir,[csvName '_' num2str(dataSet)]);
+    dataName = fullfile(MTDataDir,[csvName '_' num2str(dataSet)]);
     Jude_StitchDataSets(saveName,dataName);
 end
 %% Switch Velocity Signs
 %ensures negative velocity corresponds to contractile motion while 
 %positive velocity corresponds to extensile motion
-JUDE_SwitchVelocitySign(combinedDir,combinedDir,csvName,[csvName '_SignSwitched']);
+JUDE_SwitchVelocitySign(MTDataDir,MTDataDir,csvName,[csvName '_SignSwitched']);
 
 %% %%%%%%%%%%%%%%%%%%% FILTERING %%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% Filter Through Data based on Angle
-angleCutOff = deg2rad(10);
-filtCSVName = [csvName '_Filtered'];
-FUNC_FilterCSVOmit(combinedDir,combinedDir,[csvName '_SignSwitched'],filtCSVName,{'DeltaA'},[angleCutOff,(2*pi)-angleCutOff]);
+degreeCutOff = 10;
+angleCutOff = deg2rad(degreeCutOff);
+filtCSVName = [csvName '_' num2str(degreeCutOff) 'Degrees'];
+FUNC_FilterCSVOmit(MTDataDir,MTDataDir,[csvName '_SignSwitched'],filtCSVName,{'DeltaA'},[angleCutOff,(2*pi)-angleCutOff]);
 
 %% Filter Through Data based on Channel Number
 %for channel option can choose 1:any channel combination, 2:both MTs from first channel
 %, 3: pair contains one MT from each channel, 4: both MTs from second channel
 ChOpt = 1;
 if ChOpt ~= 1
-    FUNC_FilterCSVIncl(combinedDir,combinedDir,filtCSVName,filtCSVName,{'Ch1_Ch2'},[ChOpt,ChOpt]);
+    FUNC_FilterCSVIncl(MTDataDir,MTDataDir,filtCSVName,filtCSVName,{'Ch1_Ch2'},[ChOpt,ChOpt]);
 end
 %% Filtering to create region with Desired Separation Width
 regionWidth = 2;%in microns
-FUNC_FilterCSVIncl(combinedDir,combinedDir,filtCSVName,filtCSVName,...
+parCSVName = [filtCSVName '_ParAxis'];
+perpCSVName = [filtCSVName '_PerpAxis'];
+
+%For regions along parallel axis
+FUNC_FilterCSVIncl(MTDataDir,MTDataDir,filtCSVName,parCSVName,...
     {'PerpSep'},[-regionWidth,regionWidth]);
+
+%For regions along perpendicular axis
+FUNC_FilterCSVIncl(MTDataDir,MTDataDir,filtCSVName,perpCSVName,...
+    {'ParSep'},[-regionWidth,regionWidth]);
+
 %% Define region analysis parameters
 numRegions = 10;
-regionInterval = 2;%in microns
+regionLength = 2;%in microns
 numBins = 50;
 edge = 1;%determines how far farthest bin is from zero
 edges = linspace(-edge,edge, numBins);
 regionMidPts = zeros(1,numRegions);
 for region = 1:numRegions
-    regionMidPts(region) = (((region-1)*(regionInterval))+(region*regionInterval))/2;
+    regionMidPts(region) = (((region-1)*(regionLength))+(region*regionLength))/2;
 end
 
-%Making Directory to Store CSV for Each Distribution
-regionDir = fullfile(combinedDir,'RegionComparison');
-mkdir(regionDir);
+%Making Directories to Store CSV for Each Distribution
+parRegionDir = fullfile(MTDataDir,'ParAxisCSVs');
+mkdir(parRegionDir);
 
+perpRegionDir = fullfile(MTDataDir,'PerpAxisCSVs');
+mkdir(perpRegionDir);
 
 %% Create 2 dimensional parVels structure where fields are regions 
 parVels = struct();
@@ -58,18 +70,23 @@ parVels = struct();
 
 for region = 1:numRegions
     %creating bounds for region
-    lowerBound = (region-1)*regionInterval;
-    upperBound = region*regionInterval;
+    lowerBound = (region-1)*regionLength;
+    upperBound = region*regionLength;
 
     
-    fileName = [filtCSVName '_' num2str(region)];
-    FUNC_FilterCSVIncl(combinedDir,regionDir,filtCSVName,fileName,{'ParSep'},[-upperBound,upperBound]);
-    FUNC_FilterCSVOmit(regionDir,regionDir,fileName,fileName,{'ParSep'},[-lowerBound,lowerBound]);
-
-    
-    filteredTable = readtable(fullfile(regionDir,fileName));
-    currFieldName = ['RegionNum_' num2str(region)];
+    parFileName = [parCSVName '_' num2str(region*regionLength) 'um'];
+    FUNC_FilterCSVIncl(MTDataDir,parRegionDir,parCSVName,parFileName,{'ParSep'},[-upperBound,upperBound]);
+    FUNC_FilterCSVOmit(parRegionDir,parRegionDir,parFileName,parFileName,{'ParSep'},[-lowerBound,lowerBound]);
+    filteredTable = readtable(fullfile(parRegionDir,parFileName));
+    currFieldName = ['Region_' num2str(region*regionLength) 'um'];
     parVels.(currFieldName) = filteredTable.('Vpar');
+    
+    perpFileName = [perpCSVName '_' num2str(region*regionLength) 'um'];
+    FUNC_FilterCSVIncl(MTDataDir,perpRegionDir,perpCSVName,perpFileName,{'PerpSep'},[-upperBound,upperBound]);
+    FUNC_FilterCSVOmit(perpRegionDir,perpRegionDir,perpFileName,perpFileName,{'PerpSep'},[-lowerBound,lowerBound]);
+    filteredTable = readtable(fullfile(perpRegionDir,perpFileName));
+    currFieldName = ['Region_' num2str(region*regionLength) 'um'];
+    perpVels.(currFieldName) = filteredTable.('Vpar');
   
 end
 %% %%%%%%%%%%%%%%%%%% MINOR ANALYSIS %%%%%%%%%%%%%%%%%%%%%%%%
@@ -77,15 +94,15 @@ end
 %% Extract Amount of Data in Each Region
 numDataDist = zeros(1,numRegions);
 for region = 1:numRegions
-    currFieldName = ['RegionNum_' num2str(region)];
+    currFieldName = ['Region_' num2str(region*regionLength) 'um'];
     numDataDist(1,region) = length(parVels.(currFieldName));
 end
 %% Extract Avg Velocities From ParVels Structure (To Compare with Peaks of Distributions)
     avgVels = zeros(1,numRegions);
     avgV_Error= avgVels;
     for region = 1:numRegions
-        currFieldName = ['RegionNum_' num2str(region)];
-        currParVels = parVels.(currFieldName);
+        currFieldName = ['Region_' num2str(region*regionLength) 'um'];
+        currParVels = perpVels.(currFieldName);
         avgVels(region) = mean(currParVels);
         avgV_Error(region) = sqrt((1/(length(currParVels)-1))*sum((currParVels-avgVels(region)).^2));
         avgV_Error(region) = avgV_Error(region)/sqrt(numDataDist(region));
@@ -93,7 +110,7 @@ end
     scale = diff(avgVels);
     avgScale = mean(scale);
     figure(1);
-    errorbar(regionMidPts,avgVels,avgV_Error);
+    errorbar(regionMidPts,avgVels,avgV_Error,'.');
     title('Average Velocity versus Region Separation Distance'); 
 
 %% Apply horizontal scaling factor correction to parVels Structure
@@ -141,8 +158,8 @@ for region = 1:numRegions
     end
     
     %Creating Plot Title
-    lowerBound = (region-1)*regionInterval;
-    upperBound = region*regionInterval;
+    lowerBound = (region-1)*regionLength;
+    upperBound = region*regionLength;
     title([num2str(lowerBound) ' to ' num2str(upperBound) ' microns']);
     
     %N gives amount of data points for each bin for a given distribution
@@ -165,8 +182,8 @@ for region = 1:numRegions
     scatter(mean([edges(1:end-1);edges(2:end)]),N_scaled,'filled','MarkerFaceColor',color);
 
     %Creating Legend Names
-    lowerBound = (region-1)*regionInterval;
-    upperBound = region*regionInterval;
+    lowerBound = (region-1)*regionLength;
+    upperBound = region*regionLength;
     str = [num2str(lowerBound), ' to ',num2str(upperBound),' microns'];
     legendNames{region} = join(str);
 end
@@ -199,8 +216,8 @@ for region = 1:numRegions
     delete(p(1,1));
     
     %create legend names for each distribution
-    lowerBound = (region-1)*regionInterval;
-    upperBound = region*regionInterval;
+    lowerBound = (region-1)*regionLength;
+    upperBound = region*regionLength;
     str = [num2str(lowerBound) ' to ' num2str(upperBound) ' microns'];
     
     %set color for each distribution and display correct legend name
