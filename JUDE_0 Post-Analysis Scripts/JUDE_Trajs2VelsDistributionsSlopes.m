@@ -1,6 +1,6 @@
 %% Define directories and conversion factors
-dataDir = 'C:\Users\judem\Documents\SlidingMTData\AlexDataAnalysis';
-analysisDir = 'C:\Users\judem\Documents\SlidingMTData\AlexDataAnalysis';
+dataDir = 'C:\Users\judem\Documents\SlidingMTData\AlexDataAnalysis\Linnea Data Par Perp Axes Filters CSVs';
+analysisDir = dataDir;
 % dataDir = 'D:\Two Channel Nematic\Linnea Data\forRemi\2020-11-19 Analysis';
 % analysisDir = 'D:\Two Channel Nematic\Alex Two Color MT Data\Data Set 1\Combined\Stephen Test\Channel 1\Channel 1';
 pixelConv = 6.5*2/100;   %in microns/pixel
@@ -8,37 +8,37 @@ timeConv = 0.35;    %in seconds/frame
 WINDOW = 1;         %in frames
 angleCutOff = 10;   %in degrees
 axisCutOff = 2;     %microns
-allDataName = 'tracks';
+allDataName = 'LinneaOgVelPairs';
 
 %% Get reference frame data from tracks.m in dataDir and store in analysisDir
-FUNC_Trajs2VelPairs(dataDir, analysisDir, allDataName, WINDOW, pixelConv, timeConv);
-FUNC_Trajs2VelPairs(dataDir, analysisDir, [allDataName '_unscaled'], WINDOW, 1, 1);
+% FUNC_Trajs2VelPairs(dataDir, analysisDir, allDataName, WINDOW, pixelConv, timeConv);
+% FUNC_Trajs2VelPairs(dataDir, analysisDir, [allDataName '_unscaled'], WINDOW, 1, 1);
 
 %% Filter out unaligned microtubules/objects
 angFiltHandle = sprintf('%s Degree Filter', num2str(angleCutOff));
 angFiltFolder = fullfile(analysisDir, angFiltHandle);
 angFiltName = [allDataName sprintf('_%sDegFilter',num2str(angleCutOff))];
-FUNC_FilterCSVIncl(analysisDir, angFiltFolder, allDataName, angFiltName, ...
-    {'DeltaA'},[0 deg2rad(angleCutOff)])
+% FUNC_FilterCSVIncl(analysisDir, angFiltFolder, allDataName, angFiltName, ...
+%     {'DeltaA'},[0 deg2rad(angleCutOff)])
 
 %% Filter and keep data only along perpendicular axis
 axisFiltHandle = 'Perpendicular Axis';
 axisFiltFolderPerp = fullfile(angFiltFolder, axisFiltHandle);
 axisFiltNamePerp = [angFiltName '_PerpAxis'];
-FUNC_FilterCSVIncl(angFiltFolder, axisFiltFolderPerp, angFiltName, axisFiltNamePerp, ...
-    {'ParSep'}, [-axisCutOff axisCutOff]);
+% FUNC_FilterCSVIncl(angFiltFolder, axisFiltFolderPerp, angFiltName, axisFiltNamePerp, ...
+%     {'ParSep'}, [-axisCutOff axisCutOff]);
 axisFiltHandle = 'Parallel Axis';
 axisFiltFolderPar = fullfile(angFiltFolder, axisFiltHandle);
 axisFiltNamePar = [angFiltName '_ParAxis'];
-FUNC_FilterCSVIncl(angFiltFolder, axisFiltFolderPar, angFiltName, axisFiltNamePar, ...
-    {'PerpSep'}, [-axisCutOff axisCutOff]);
+% FUNC_FilterCSVIncl(angFiltFolder, axisFiltFolderPar, angFiltName, axisFiltNamePar, ...
+%     {'PerpSep'}, [-axisCutOff axisCutOff]);
 
 %% Bin by separation distance along perpendicular axis
 binSize = 2; binMin = 0; binMax = 20;      %in microns
 
 % PERPENDICULAR Axis Binning
 axisFiltHandle = 'Perpendicular Axis';
-axisFiltFolderPerp = fullfile(angFiltFolder, axisFiltHandle);
+axisFiltFolderPerp = 'C:\Users\judem\Documents\SlidingMTData\AlexDataAnalysis\Linnea Data Par Perp Axes Filters CSVs';
 binFiltHandle = cleanString( sprintf('Perpendicular Separation Distance %sum Binnings',num2str(binSize)) );
 binFiltFolderPerp = fullfile(axisFiltFolderPerp, binFiltHandle);
 %Remove inner fraction of data, then outer fraction of data
@@ -60,7 +60,7 @@ end
 
 % PARALLEL Axis Binning
 axisFiltHandle = 'Parallel Axis';
-axisFiltFolderPar = fullfile(angFiltFolder, axisFiltHandle);
+axisFiltFolderPar = axisFiltFolderPerp;
 binFiltHandle = cleanString( sprintf('Parallel Separation Distance %sum Binnings',num2str(binSize)) );
 binFiltFolderPar = fullfile(axisFiltFolderPar, binFiltHandle);
 % %Remove inner fraction of data, then outer fraction of data

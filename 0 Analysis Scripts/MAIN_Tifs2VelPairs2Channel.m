@@ -1,4 +1,4 @@
-,%% Define variables and parameters
+%% Define variables and parameters
 csvName = 'CombinedData';
 combinedDir = 'C:\Users\Jude\Documents\SlidingMTData';
 dt = 1;

@@ -1,6 +1,6 @@
 %% Define Location of CSV File
-csvName = 'AlexData';
-MTDataDir = 'C:\Users\judem\Documents\SlidingMTData\AlexDataAnalysis';
+csvName = 'LinneaOgFirst500';
+MTDataDir = 'C:\Users\judem\Documents\SlidingMTData\LinneaFirst500DataAnalysis';
 dataLoc = fullfile(MTDataDir,csvName);
 
 %% Stitch Velocity Data Sets Together
@@ -16,7 +16,7 @@ end
 %% Switch Velocity Signs
 %ensures negative velocity corresponds to contractile motion while 
 %positive velocity corresponds to extensile motion
-JUDE_SwitchVelocitySign(MTDataDir,MTDataDir,csvName,[csvName '_SignSwitched']);
+% JUDE_SwitchVelocitySign(MTDataDir,MTDataDir,csvName,[csvName '_SignSwitched']);
 
 %% %%%%%%%%%%%%%%%%%%% FILTERING %%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -34,7 +34,7 @@ if ChOpt ~= 1
     FUNC_FilterCSVIncl(MTDataDir,MTDataDir,filtCSVName,filtCSVName,{'Ch1_Ch2'},[ChOpt,ChOpt]);
 end
 %% Filtering to create region with Desired Separation Width
-regionWidth = 2;%in microns
+regionWidth = 13;%in microns
 parCSVName = [filtCSVName '_ParAxis'];
 perpCSVName = [filtCSVName '_PerpAxis'];
 
@@ -47,10 +47,10 @@ FUNC_FilterCSVIncl(MTDataDir,MTDataDir,filtCSVName,perpCSVName,...
     {'ParSep'},[-regionWidth,regionWidth]);
 
 %% Define region analysis parameters
-numRegions = 10;
-regionLength = 2;%in microns
+numRegions = 8;
+regionLength = 13;%in microns
 numBins = 50;
-edge = 1;%determines how far farthest bin is from zero
+edge = 10;%determines how far farthest bin is from zero
 edges = linspace(-edge,edge, numBins);
 regionMidPts = zeros(1,numRegions);
 for region = 1:numRegions
@@ -79,14 +79,14 @@ for region = 1:numRegions
     FUNC_FilterCSVOmit(parRegionDir,parRegionDir,parFileName,parFileName,{'ParSep'},[-lowerBound,lowerBound]);
     filteredTable = readtable(fullfile(parRegionDir,parFileName));
     currFieldName = ['Region_' num2str(region*regionLength) 'um'];
-    parVels.(currFieldName) = filteredTable.('Vpar');
+    parVels.(currFieldName) = filteredTable.('VRelpar');
     
     perpFileName = [perpCSVName '_' num2str(region*regionLength) 'um'];
     FUNC_FilterCSVIncl(MTDataDir,perpRegionDir,perpCSVName,perpFileName,{'PerpSep'},[-upperBound,upperBound]);
     FUNC_FilterCSVOmit(perpRegionDir,perpRegionDir,perpFileName,perpFileName,{'PerpSep'},[-lowerBound,lowerBound]);
     filteredTable = readtable(fullfile(perpRegionDir,perpFileName));
     currFieldName = ['Region_' num2str(region*regionLength) 'um'];
-    perpVels.(currFieldName) = filteredTable.('Vpar');
+    perpVels.(currFieldName) = filteredTable.('VRelpar');
   
 end
 %% %%%%%%%%%%%%%%%%%% MINOR ANALYSIS %%%%%%%%%%%%%%%%%%%%%%%%
@@ -136,8 +136,9 @@ peakError = peaks;
 
 %create bins for each region and plot distribution
 for region = 1:numRegions
-    currFieldName = ['RegionNum_' num2str(region)];
-    N = histcounts(parVels.(currFieldName),edges);
+    currFieldName = ['Region_' num2str(region*regionLength) 'um'];
+    
+    N = histcounts(perpVels.(currFieldName),edges);
     %Applies Vertical Scaling
     N_scaled = N/numDataDist(1,region);
     
@@ -149,7 +150,7 @@ for region = 1:numRegions
         peaks(1,region) = f.b1;
         peakError(1,region) = f.c1;
         peakError(1,region) = peakError(1,region)/sqrt(numDataDist(1,region));
-        xlim([-2,2]);
+        xlim([-8,8]);
     elseif plotOpt == 2
         f = fit(mean([edges(1:end-1);edges(2:end)])',N_scaled','gauss2');
         plot(f,'r',mean([edges(1:end-1);edges(2:end)]),N_scaled);
@@ -170,8 +171,8 @@ figure(region+2);
 hold on;
 legendNames = cell(1,numRegions);
 for region = 1:numRegions
-    currFieldName = ['RegionNum_' num2str(region)];
-    N = histcounts(parVels.(currFieldName),edges);
+    currFieldName = ['Region_' num2str(region*regionLength) 'um'];
+    N = histcounts(perpVels.(currFieldName),edges);
     %applying vertical scaling
     N_scaled = N/numDataDist(1,region);
     
@@ -196,8 +197,8 @@ figure(region+3);
 hold on;
 legendNames = strings(1,numRegions);
 for region = 1:numRegions
-    currFieldName = ['RegionNum_' num2str(region)];
-    N = histcounts(parVels.(currFieldName),edges);
+    currFieldName = ['Region_' num2str(region*regionLength) 'um'];
+    N = histcounts(perpVels.(currFieldName),edges);
     %applying vertical scaling
     N_scaled = N/numDataDist(1,region);
     
