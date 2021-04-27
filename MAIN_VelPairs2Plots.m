@@ -34,7 +34,7 @@ if ChOpt ~= 1
     FUNC_FilterCSVIncl(MTDataDir,MTDataDir,filtCSVName,filtCSVName,{'Ch1_Ch2'},[ChOpt,ChOpt]);
 end
 %% Filtering to create region with Desired Separation Width
-regionWidth = 13;%in microns
+regionWidth = 2;%in microns
 parCSVName = [filtCSVName '_ParAxis'];
 perpCSVName = [filtCSVName '_PerpAxis'];
 
@@ -47,8 +47,8 @@ FUNC_FilterCSVIncl(MTDataDir,MTDataDir,filtCSVName,perpCSVName,...
     {'ParSep'},[-regionWidth,regionWidth]);
 
 %% Define region analysis parameters
-numRegions = 8;
-regionLength = 13;%in microns
+numRegions = 10;
+regionLength = 2;%in microns
 numBins = 50;
 edge = 10;%determines how far farthest bin is from zero
 edges = linspace(-edge,edge, numBins);
@@ -86,7 +86,7 @@ for region = 1:numRegions
     FUNC_FilterCSVOmit(perpRegionDir,perpRegionDir,perpFileName,perpFileName,{'PerpSep'},[-lowerBound,lowerBound]);
     filteredTable = readtable(fullfile(perpRegionDir,perpFileName));
     currFieldName = ['Region_' num2str(region*regionLength) 'um'];
-    perpVels.(currFieldName) = filteredTable.('VRelpar');
+    perpVels.(currFieldName) = filteredTable.('VRelperp');
   
 end
 %% %%%%%%%%%%%%%%%%%% MINOR ANALYSIS %%%%%%%%%%%%%%%%%%%%%%%%
@@ -102,16 +102,24 @@ end
     avgV_Error= avgVels;
     for region = 1:numRegions
         currFieldName = ['Region_' num2str(region*regionLength) 'um'];
-        currParVels = perpVels.(currFieldName);
+        currParVels = parVels.(currFieldName);
         avgVels(region) = mean(currParVels);
+        
         avgV_Error(region) = sqrt((1/(length(currParVels)-1))*sum((currParVels-avgVels(region)).^2));
         avgV_Error(region) = avgV_Error(region)/sqrt(numDataDist(region));
     end
     scale = diff(avgVels);
     avgScale = mean(scale);
     figure(1);
+    hold on
+    linearFit = polyfit(regionMidPts,avgVels,1);
     errorbar(regionMidPts,avgVels,avgV_Error,'.');
-    title('Average Velocity versus Region Separation Distance'); 
+    avgVelSlope = linearFit(1,1);
+    plot(regionMidPts,(linearFit(1,1)*regionMidPts + linearFit(1,2)));
+    title(['Average Velocity of Each Distribution. Slope: ' num2str(avgVelSlope)]); 
+    xlabel('Parallel Separation Distance (um)');
+    ylabel('Average Value of Par Vel Distributions(um/s)');
+    hold off
 
 %% Apply horizontal scaling factor correction to parVels Structure
 % for region = 1:numRegions
@@ -138,11 +146,11 @@ peakError = peaks;
 for region = 1:numRegions
     currFieldName = ['Region_' num2str(region*regionLength) 'um'];
     
-    N = histcounts(perpVels.(currFieldName),edges);
+    N = histcounts(parVels.(currFieldName),edges);
     %Applies Vertical Scaling
     N_scaled = N/numDataDist(1,region);
     
-    figure(region);
+    figure(region+1);
     %Plots based on which fit option user chooses
     if plotOpt == 1
         f = fit(mean([edges(1:end-1);edges(2:end)])',N_scaled','gauss1');
@@ -172,7 +180,7 @@ hold on;
 legendNames = cell(1,numRegions);
 for region = 1:numRegions
     currFieldName = ['Region_' num2str(region*regionLength) 'um'];
-    N = histcounts(perpVels.(currFieldName),edges);
+    N = histcounts(parVels.(currFieldName),edges);
     %applying vertical scaling
     N_scaled = N/numDataDist(1,region);
     
@@ -198,7 +206,7 @@ hold on;
 legendNames = strings(1,numRegions);
 for region = 1:numRegions
     currFieldName = ['Region_' num2str(region*regionLength) 'um'];
-    N = histcounts(perpVels.(currFieldName),edges);
+    N = histcounts(parVels.(currFieldName),edges);
     %applying vertical scaling
     N_scaled = N/numDataDist(1,region);
     
@@ -240,7 +248,7 @@ errorbar(regionMidPts,peaks,peakError,'.');
 xlabel('Parallel Separation Distance (um)');
 ylabel('Peak Value of Par Vel Distributions(um/s)');
 linearFit = polyfit(regionMidPts,peaks,1);
-slope = linearFit(1,1);
+peakSlope = linearFit(1,1);
 plot(regionMidPts,(linearFit(1,1)*regionMidPts + linearFit(1,2)));
-title(['Peak of Each Distribution. Slope: ' num2str(slope)]);
+title(['Peak of Each Distribution. Slope: ' num2str(peakSlope)]);
 hold off

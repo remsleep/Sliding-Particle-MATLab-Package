@@ -8,7 +8,7 @@ timeConv = 1.29;
 
 %% %%%%%%%%%%%%%%%% CHANNEL 1 %%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Define directory
-dataDir = 'C:\Users\Jude\Documents\MATLAB\For Linnea\Data tifs';
+dataDir = 'C:\Users\judem\Documents\SlidingMTData\ForLinneaTifs\Data tifs';
 outDir1 = dataDir;
 DATA_PATH = fullfile(dataDir, 'C1 tifs');
 [~, ySize] = FUNC_getImgDims(DATA_PATH, 'tif');
