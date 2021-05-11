@@ -1,3 +1,5 @@
+%%This functions takes in a structure containing information about MT
+%%trajectories and then outputs a corresponding array
 function TrajArray = JUDE_TrajStructure2Array(TRAJ)
 
     %%creating IDs

@@ -1,12 +1,12 @@
 %% Define variables and parameters
-csvName = 'LinneaOgVelPairs';
-combinedDir = 'E:\Two Channel Nematic\Linnea Data\forRemi\Linnea Original Data';
+csvName = 'CombinedData';
+combinedDir = 'C:\Users\Jude\Documents\SlidingMTData';
 dt = 1;
-pixelConv = 6.5*2/100;
-timeConv = 0.35;
+pixelConv = 0.101;%meters/pixels
+timeConv = 1.29;%seconds/frame
 
 %% Define directory
-dataDir = 'E:\Two Channel Nematic\Linnea Data\forRemi\Batch1';
+dataDir = 'C:\Users\Jude\Documents\SlidingMTData';
 outDir1 = dataDir;
 DATA_PATH = fullfile(dataDir, 'tifs');
 [~, ySize] = FUNC_getImgDims(DATA_PATH, 'tif');

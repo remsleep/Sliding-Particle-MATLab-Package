@@ -1,3 +1,6 @@
+%%FOr Comparing Stephen's and Linnea's Velocity Analysis
+
+
 %%loading test data from appropriate directory
 directory = 'C:\Users\Jude\Documents\MATLAB\2020-07-31 For Jude\Fake Data';
 % load(fullfile(directory, 'SameDirectionParallel.mat'));

@@ -33,7 +33,11 @@ w = warning ('off','all');
 
 %% Set Filenames and directories
 analysisdir=strcat(directory,'');
+<<<<<<< HEAD
 datastorename=strcat(analysisdir,'\LinneaOgVelPairs_unscaled_forLinneaBinScript_unflippedVels.csv');
+=======
+datastorename=strcat(analysisdir,'\LinneaOgVelPairs_10DegFilter_ParAxis.csv');
+>>>>>>> 230a7f3754ce9e029b4c230429771a3f617ad6c3
 savename2=strcat(analysisdir,'');
 
 %delete the old analysis.mat file (NOT CSV) in case of appending.
@@ -144,7 +148,7 @@ while hasdata(ds);
     linearIndVy = sub2ind( size(VyArray) , bins(:,1) , bins(:,2) , bins(:,4)); %Y Vels
     
     %Do the binning for the NET.
-    for i=1:size(linearIndVx,1);
+    for i=1:size(linearIndVx,1)
         VxArray(linearIndVx(i))=VxArray(linearIndVx(i))+1; %Bin Xs
         VyArray(linearIndVy(i))=VyArray(linearIndVy(i))+1; %Bin Ys
     end
