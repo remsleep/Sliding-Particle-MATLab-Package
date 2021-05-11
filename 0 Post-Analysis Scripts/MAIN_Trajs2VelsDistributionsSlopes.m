@@ -7,7 +7,8 @@ pixelConv = 6.5*2/100;   %in microns/pixel
 timeConv = 0.35;    %in seconds/frame
 WINDOW = 1;         %in frames
 angleCutOff = 10;   %in degrees
-axisCutOff = 2;     %microns
+% axisCutOff = 6;     %microns
+axisCutOff = 6/13*100;     %pixels
 allDataName = 'LinneaOgVelPairs';
 
 %% Get reference frame data from tracks.m in dataDir and store in analysisDir
@@ -17,8 +18,10 @@ FUNC_Trajs2VelPairs(dataDir, analysisDir, [allDataName '_unscaled'], WINDOW, 1, 
 %% Filter out unaligned microtubules/objects
 angFiltHandle = sprintf('%s Degree Filter', num2str(angleCutOff));
 angFiltFolder = fullfile(analysisDir, angFiltHandle);
-angFiltName = [allDataName sprintf('_%sDegFilter',num2str(angleCutOff))];
-FUNC_FilterCSVIncl(analysisDir, angFiltFolder, allDataName, angFiltName, ...
+angFiltName = [allDataName sprintf('_%sDegFilter',num2str(angleCutOff)) '_unscaled'];
+% angFiltName = [allDataName sprintf('_%sDegFilter',num2str(angleCutOff))];
+
+FUNC_FilterCSVIncl(analysisDir, angFiltFolder, [allDataName '_unscaled'], angFiltName, ...
     {'DeltaA'},[0 deg2rad(angleCutOff)])
 
 %% Filter and keep data only along perpendicular axis
@@ -35,6 +38,7 @@ FUNC_FilterCSVIncl(angFiltFolder, axisFiltFolderPar, angFiltName, axisFiltNamePa
 
 %% Bin by separation distance along perpendicular axis
 binSize = 13; binMin = 6; binMax = 100;      %in microns
+% binSize = 13/13*100; binMin = 6/13*100; binMax = 100/13*100;      %in microns
 
 % PERPENDICULAR Axis Binning
 axisFiltHandle = 'Perpendicular Axis';
@@ -44,9 +48,9 @@ binFiltFolderPerp = fullfile(axisFiltFolderPerp, binFiltHandle);
 %Remove inner fraction of data, then outer fraction of data
 for currBin = binMin:binSize:binMax
    binFiltName = cleanString( sprintf('%sum_BinSize%s',num2str(currBin), num2str(binSize)) );
-   FUNC_FilterCSVOmit(axisFiltFolderPerp, binFiltFolder, axisFiltNamePerp, binFiltName, ...
+   FUNC_FilterCSVOmit(axisFiltFolderPerp, binFiltFolderPerp, axisFiltNamePerp, binFiltName, ...
        {'PerpSep'}, [-currBin currBin]);
-   FUNC_FilterCSVIncl(binFiltFolder, binFiltFolder, binFiltName, binFiltName, ...
+   FUNC_FilterCSVIncl(binFiltFolderPerp, binFiltFolderPerp, binFiltName, binFiltName, ...
        {'PerpSep'}, [-(currBin+binSize) (currBin+binSize)]);
 end
 
@@ -54,7 +58,7 @@ end
 if binMin > 0
     currBin = 0;
        binFiltName = cleanString( sprintf('%sum_BinSize%s',num2str(currBin), num2str(binSize)) );
-   FUNC_FilterCSVIncl(axisFiltFolderPerp, binFiltFolder, axisFiltNamePerp, binFiltName, ...
+   FUNC_FilterCSVIncl(axisFiltFolderPerp, binFiltFolderPerp, axisFiltNamePerp, binFiltName, ...
        {'PerpSep'}, [-(currBin+binMin) (currBin+binMin)]);
 end
 
@@ -66,9 +70,9 @@ binFiltFolderPar = fullfile(axisFiltFolderPar, binFiltHandle);
 % %Remove inner fraction of data, then outer fraction of data
 for currBin = binMin:binSize:binMax
    binFiltName = cleanString( sprintf('%sum_BinSize%s',num2str(currBin), num2str(binSize)) );
-   FUNC_FilterCSVOmit(axisFiltFolderPar, binFiltFolder, axisFiltNamePar, binFiltName, ...
+   FUNC_FilterCSVOmit(axisFiltFolderPar, binFiltFolderPar, axisFiltNamePar, binFiltName, ...
        {'ParSep'}, [-currBin currBin]);
-   FUNC_FilterCSVIncl(binFiltFolder, binFiltFolder, binFiltName, binFiltName, ...
+   FUNC_FilterCSVIncl(binFiltFolderPar, binFiltFolderPar, binFiltName, binFiltName, ...
        {'ParSep'}, [-(currBin+binSize) (currBin+binSize)]);
 end
 
@@ -76,14 +80,14 @@ end
 if binMin > 0
     currBin = 0;
        binFiltName = cleanString( sprintf('%sum_BinSize%s',num2str(currBin), num2str(binSize)) );
-   FUNC_FilterCSVIncl(axisFiltFolderPar, binFiltFolder, axisFiltNamePar, binFiltName, ...
+   FUNC_FilterCSVIncl(axisFiltFolderPar, binFiltFolderPar, axisFiltNamePar, binFiltName, ...
        {'ParSep'}, [-(currBin+binMin) (currBin+binMin)]);
 end
 
 %% Get mean velocities and standard deviations
 % PERPENDICULAR
 allFiles = dir(binFiltFolderPar);
-fieldOfInterest = 'VRelpar';
+fieldOfInterest = 'VRelperp';
 meanVals = [];
 stdDevs = [];
 numElmts = [];

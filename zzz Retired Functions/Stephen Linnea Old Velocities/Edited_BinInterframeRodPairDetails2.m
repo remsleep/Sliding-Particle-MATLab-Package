@@ -1,4 +1,4 @@
-function BinInterframeRodPairDetails2(directory)
+function Edited_BinInterframeRodPairDetails2(directory)
 
 
 %% Input Settings.  Simplified. 
@@ -6,7 +6,7 @@ function BinInterframeRodPairDetails2(directory)
 
 
 
-BinWidth=100; % Width of the Box in pixels. 
+BinWidth=16; % Width of the Box in pixels. 
 
 Vwidth=0.005; %pixels/frame  %making this small is best.
 %Since the velocities can range from 0 to infinity, select a cap which is
