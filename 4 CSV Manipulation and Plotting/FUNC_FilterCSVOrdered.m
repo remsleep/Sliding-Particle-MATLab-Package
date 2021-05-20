@@ -86,7 +86,7 @@ if strcmp(dataLoc, outLoc)
 end
 
 % Add a delay to prevent thread hiccups
-fclose('all')
+fclose('all');
 
 end
 

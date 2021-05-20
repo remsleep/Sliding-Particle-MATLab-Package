@@ -6,7 +6,7 @@ function Edited_BinInterframeRodPairDetails2(directory)
 
 
 
-BinWidth=16; % Width of the Box in pixels. 
+BinWidth=100; % Width of the Box in pixels. 
 
 Vwidth=0.005; %pixels/frame  %making this small is best.
 %Since the velocities can range from 0 to infinity, select a cap which is
@@ -33,7 +33,7 @@ w = warning ('off','all');
 
 %% Set Filenames and directories
 analysisdir=strcat(directory,'');
-datastorename=strcat(analysisdir,'\LinneaOgVelPairs_unscaled_forLinneaBinScript_unflippedVels.csv');
+datastorename=strcat(analysisdir,'\LinneaOgFirst500_unscaled_copy.csv');
 savename2=strcat(analysisdir,'');
 
 %delete the old analysis.mat file (NOT CSV) in case of appending.

@@ -33,11 +33,8 @@ w = warning ('off','all');
 
 %% Set Filenames and directories
 analysisdir=strcat(directory,'');
-<<<<<<< HEAD
-datastorename=strcat(analysisdir,'\LinneaOgVelPairs_unscaled_forLinneaBinScript_unflippedVels.csv');
-=======
+
 datastorename=strcat(analysisdir,'\LinneaOgVelPairs_10DegFilter_ParAxis.csv');
->>>>>>> 230a7f3754ce9e029b4c230429771a3f617ad6c3
 savename2=strcat(analysisdir,'');
 
 %delete the old analysis.mat file (NOT CSV) in case of appending.
