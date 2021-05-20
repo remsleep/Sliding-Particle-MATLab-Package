@@ -21,7 +21,6 @@ numFrames = size(objPredictions,3);
 for currFrame = 1:numFrames
     binaryImage = objPredictions(:,:,currFrame);
     %Remove >pixelMax and <pixelMin pixel objects:
-    L = labelmatrix(CC);
     CC = bwconncomp(binaryImage);
     MTs = regionprops(CC, 'centroid','MajorAxisLength','Orientation','MinorAxisLength');
     MTData(currFrame).MTs = MTs;

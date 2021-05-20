@@ -1,6 +1,6 @@
 %% Define Location of CSV File
-csvName = 'LinneaOgFirst500';
-MTDataDir = 'C:\Users\judem\Documents\SlidingMTData\LinneaFirst500DataAnalysis';
+csvName = 'AlexData';
+MTDataDir = 'C:\Users\judem\Documents\SlidingMTData\AlexDataAnalysis';
 dataLoc = fullfile(MTDataDir,csvName);
 
 %% Stitch Velocity Data Sets Together
@@ -11,12 +11,12 @@ saveName = fullfile(MTDataDir,csvName);
 numDataSets = 0;
 for dataSet = 1:numDataSets
     dataName = fullfile(MTDataDir,[csvName '_' num2str(dataSet)]);
-    Jude_StitchDataSets(saveName,dataName);
+    FUNC_StitchDataSets(saveName,dataName);
 end
 %% Switch Velocity Signs
 %ensures negative velocity corresponds to contractile motion while 
 %positive velocity corresponds to extensile motion
-% JUDE_SwitchVelocitySign(MTDataDir,MTDataDir,csvName,[csvName '_SignSwitched']);
+FUNC_SwitchVelocitySign(MTDataDir,MTDataDir,csvName,[csvName '_SignSwitched']);
 
 %% %%%%%%%%%%%%%%%%%%% FILTERING %%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -34,7 +34,7 @@ if ChOpt ~= 1
     FUNC_FilterCSVIncl(MTDataDir,MTDataDir,filtCSVName,filtCSVName,{'Ch1_Ch2'},[ChOpt,ChOpt]);
 end
 %% Filtering to create region with Desired Separation Width
-regionWidth = 2;%in microns
+regionWidth = 0.1;%in microns
 parCSVName = [filtCSVName '_ParAxis'];
 perpCSVName = [filtCSVName '_PerpAxis'];
 
@@ -48,9 +48,10 @@ FUNC_FilterCSVIncl(MTDataDir,MTDataDir,filtCSVName,perpCSVName,...
 
 %% Define region analysis parameters
 numRegions = 10;
-regionLength = 2;%in microns
+regionLength = 0.2;%in microns
+
 numBins = 50;
-edge = 10;%determines how far farthest bin is from zero
+edge = 2;%determines how far farthest bin is from zero
 edges = linspace(-edge,edge, numBins);
 regionMidPts = zeros(1,numRegions);
 for region = 1:numRegions
@@ -79,14 +80,14 @@ for region = 1:numRegions
     FUNC_FilterCSVOmit(parRegionDir,parRegionDir,parFileName,parFileName,{'ParSep'},[-lowerBound,lowerBound]);
     filteredTable = readtable(fullfile(parRegionDir,parFileName));
     currFieldName = ['Region_' num2str(region*regionLength) 'um'];
-    parVels.(currFieldName) = filteredTable.('VRelpar');
+    parVels.(currFieldName) = filteredTable.('Vpar');
     
     perpFileName = [perpCSVName '_' num2str(region*regionLength) 'um'];
     FUNC_FilterCSVIncl(MTDataDir,perpRegionDir,perpCSVName,perpFileName,{'PerpSep'},[-upperBound,upperBound]);
     FUNC_FilterCSVOmit(perpRegionDir,perpRegionDir,perpFileName,perpFileName,{'PerpSep'},[-lowerBound,lowerBound]);
     filteredTable = readtable(fullfile(perpRegionDir,perpFileName));
     currFieldName = ['Region_' num2str(region*regionLength) 'um'];
-    perpVels.(currFieldName) = filteredTable.('VRelperp');
+    perpVels.(currFieldName) = filteredTable.('Vperp');
   
 end
 %% %%%%%%%%%%%%%%%%%% MINOR ANALYSIS %%%%%%%%%%%%%%%%%%%%%%%%
