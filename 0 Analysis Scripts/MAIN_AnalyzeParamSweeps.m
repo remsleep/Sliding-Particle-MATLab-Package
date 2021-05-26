@@ -16,10 +16,6 @@ tracerParams = FUNC_getTracerParameters(DATA_PATH, 5);
  
  %% Convert to right-handed axis system by flipping y
  RH_TRAJECTORY = FUNC_LeftToRightInvert(TRAJECTORY, ySize, 'Y');
-%  trajectoryArray = FUNC_Structure2Array(TRAJECTORY);
-%  trajectoryArray(3,:) = yDim - trajectoryArray(3,:);
-%  trajectoryArray = ...
-%      [trajectoryArray(2,:); trajectoryArray(3,:); trajectoryArray(1,:); trajectoryArray(5,:); trajectoryArray(6,:)];
  
  %% Plot Trajectories
  FUNC_TrajectoryOverlayViewerImg(TRAJECTORY, IMAGES, 0)
