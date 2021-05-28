@@ -1,6 +1,6 @@
 %% Define Location of CSV File
 csvName = 'LinneaOgFirst500';
-MTDataDir = 'R:\Two Channel Nematic\Linnea Data\forRemi\Linnea Original Data';
+MTDataDir = 'C:\Users\judem\Documents\SlidingMTData\LinneaFirst500DataAnalysis';
 dataLoc = fullfile(MTDataDir,csvName);
 pixelConv = 6.5*2/100;
 timeConv = .35;
