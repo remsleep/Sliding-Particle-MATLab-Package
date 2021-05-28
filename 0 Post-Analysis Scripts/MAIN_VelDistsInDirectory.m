@@ -7,12 +7,14 @@
 % also plots the mean value of FIELDNAME from each file.
 
 %% Define directory of .csvs
-binnedDir = 'R:\Two Channel Nematic\Linnea Data\forRemi\Linnea Original Data\9 Degree Filt Vel Filtered\Parallel Axis\ParAxisCSVs';
-pixelConv = 6.5*2/100;
-timeConv = .35;
+binnedDir = 'R:\Two Channel Nematic\Alex Two Color MT Data\Ilastik Training\Analyzed Data\9 Degree Filt 5um-s Vel Filtered InterChannel\Parallel Axis 6um Width\2um Spacing';
+pixelConv = .101;
+timeConv = 1.29;
+velScale = 75;
+dx = velScale/14000;
 
 fieldName = 'VRelpar';
-velEdges = (-70:.005:70)*pixelConv/timeConv;
+velEdges = (-velScale:dx:velScale)*pixelConv/timeConv;
 
 %% Get .csv file names
 fileNames = dir(fullfile(binnedDir, '*.csv'));
@@ -45,8 +47,8 @@ for currFile = 1:numel(fileNames)
     
 end
 
-%% Get mean value of field for each separation distance
-meanVals = zeros(numel(regionMidPoints),1);
+    %% Get mean value of field for each separation distance
+meanVals = zeros(numel(regionEdges),1);
 numElmts = meanVals;
 
 for currFile = 1:numel(fileNames)

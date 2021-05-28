@@ -2,7 +2,7 @@ function [ARRAY, FIELDS] = FUNC_Structure2Array(STRUCTURE)
 %FUNC_TRAJECTORYSTRUCTURE2ARRAY takes in a STRUCTURE and turns it into an
 %array with all fields containing equal numbers of constituents for a given
 %subelement. The fields of these structures must contain only numbers. 
-tic
+% tic
 %Get cell array of all fields
 FIELDS = fieldnames(STRUCTURE);
 
@@ -40,6 +40,6 @@ end
 
 %Add OBJECT_NUMBER field to indicate what last row in ARRAY is
 FIELDS(end+1) = {'OBJECT_NUMBER'};
-toc
+% toc
 end
 

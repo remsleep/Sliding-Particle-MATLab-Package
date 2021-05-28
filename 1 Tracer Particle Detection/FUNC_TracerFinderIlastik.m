@@ -57,8 +57,11 @@ for currFile = 1:numel(dataNames)
         MTs = regionprops(CC, 'centroid','MajorAxisLength','Orientation','MinorAxisLength');
         %Generate a field recording the original file name of this data
         [fieldNameCell{1:numel(MTs)}] = deal(dataNames(currFile));
+%         [fieldIndexCell{1:numel(MTs)}] = deal(currFile);
         [MTs.('fileName')] = fieldNameCell{:};
+%         [MTs.('fileIndex')] = fieldIndexCell{:};
         MTData(structInd).MTs = MTs;
+        MTData(structInd).Set = currFile;
         structInd = structInd + 1;
     end
 end
