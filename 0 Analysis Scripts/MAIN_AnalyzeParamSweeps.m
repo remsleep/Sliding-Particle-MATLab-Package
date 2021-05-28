@@ -1,14 +1,11 @@
 %% Define directory
  currDir = 'E:\Two Channel Nematic\Linnea Data\forRemi\Batch1\tifs';
  DATA_PATH = fullfile(currDir);
- [xSize, ySize] = FUNC_getImgDims(DATA_PATH, 'tif');
+ [~, ySize] = FUNC_getImgDims(DATA_PATH, 'tif');
  
- %% Get Tracer particles
-tracerParams = FUNC_getTracerParameters(DATA_PATH, 5);
-[MT_DATA,IMAGES] = FUNC_TracerFinderRedo(DATA_PATH, tracerParams);
- 
- %% Convert to array
- allMTData = FUNC_MTStructure2Array(MT_DATA);
+ %% Get Tracer particles from Ilastik object classifier
+allMTData = FUNC_TracerFinderIlastik(dataDir,dataNames,dataIDs);
+
  
  %% Find Trajectories from detected Tracers
  trajectoryParams = FUNC_getTrajectoryParameters(allMTData, IMAGES, 20);
@@ -16,10 +13,6 @@ tracerParams = FUNC_getTracerParameters(DATA_PATH, 5);
  
  %% Convert to right-handed axis system by flipping y
  RH_TRAJECTORY = FUNC_LeftToRightInvert(TRAJECTORY, ySize, 'Y');
-%  trajectoryArray = FUNC_Structure2Array(TRAJECTORY);
-%  trajectoryArray(3,:) = yDim - trajectoryArray(3,:);
-%  trajectoryArray = ...
-%      [trajectoryArray(2,:); trajectoryArray(3,:); trajectoryArray(1,:); trajectoryArray(5,:); trajectoryArray(6,:)];
  
  %% Plot Trajectories
  FUNC_TrajectoryOverlayViewerImg(TRAJECTORY, IMAGES, 0)

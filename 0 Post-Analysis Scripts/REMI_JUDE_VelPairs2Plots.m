@@ -1,9 +1,12 @@
 %% Define Location of CSV File
-csvName = 'LinneaOgFirst500';
-MTDataDir = 'C:\Users\judem\Documents\SlidingMTData\LinneaFirst500DataAnalysis';
+csvName = 'CombinedData.csv';
+MTDataDir = 'R:\Two Channel Nematic\Alex Two Color MT Data\Ilastik Training\Analyzed Data\9 Degree Filt 5um-s Vel Filtered InterChannel\Parallel Axis 6um Width\2um Spacing';
+
 dataLoc = fullfile(MTDataDir,csvName);
-pixelConv = 6.5*2/100;
-timeConv = .35;
+pixelConv = .101;
+timeConv = 1.29;
+scaleVal = 350;
+dx = scaleVal/14000;
 
 %% Stitch Velocity Data Sets Together
 %if there are multiple data sets that should be analyzed together, this
@@ -25,28 +28,29 @@ end
 %% Filter Through Data based on Angle
 degreeCutOff = 9;
 angleCutOff = deg2rad(degreeCutOff);
-maxVel = 70*pixelConv/timeConv;
+maxVel = scaleVal*pixelConv/timeConv;
 
 % filtDir = fullfile(MTDataDir, sprintf('%s Degree Filt',num2str(degreeCutOff)));
 filtDir = fullfile(MTDataDir, sprintf('%s Degree Filt Vel Filtered',num2str(degreeCutOff)));
 filtCSVName = [csvName '_' num2str(degreeCutOff) 'Degrees'];
 FUNC_FilterCSVOmit(MTDataDir,filtDir,csvName,filtCSVName,{'DeltaA'},[angleCutOff,(2*pi)-angleCutOff]);
 FUNC_FilterCSVIncl(filtDir,filtDir,filtCSVName,filtCSVName,{'VRelpar'},[-maxVel, maxVel]);
+    FUNC_FilterCSVIncl(filtDir,filtDir,filtCSVName,filtCSVName,{'Ch1_Ch2'},[4,4]);
 % FUNC_FilterCSVOmit(MTDataDir,MTDataDir,[csvName '_SignSwitched'],filtCSVName,{'DeltaA'},[angleCutOff,(2*pi)-angleCutOff]);
 
 %% Filter Through Data based on Channel Number
 %for channel option can choose 1:any channel combination, 2:both MTs from first channel
 %, 3: pair contains one MT from each channel, 4: both MTs from second channel
-ChOpt = 1;
+ChOpt = 4;
 if ChOpt ~= 1
     FUNC_FilterCSVIncl(MTDataDir,MTDataDir,filtCSVName,filtCSVName,{'Ch1_Ch2'},[ChOpt,ChOpt]);
 end
 %% Filtering to create region with Desired Separation Width
-regionWidth = 13;%in microns
+regionWidth = 6;%in microns
 parCSVName = [filtCSVName '_ParAxis'];
 perpCSVName = [filtCSVName '_PerpAxis'];
-parDir = fullfile(filtDir, 'Parallel Axis');
-perpDir = fullfile(filtDir, 'Perpendicular Axis');
+parDir = fullfile(filtDir, ['Parallel Axis '  sprintf('%sum Width',num2str(regionWidth))]);
+perpDir = fullfile(filtDir, ['Perpendicular Axis '  sprintf('%sum Width',num2str(regionWidth))]);
 
 %For regions along parallel axis
 FUNC_FilterCSVIncl(filtDir,parDir,filtCSVName,parCSVName,...
@@ -57,21 +61,21 @@ FUNC_FilterCSVIncl(filtDir,perpDir,filtCSVName,perpCSVName,...
     {'ParSep'},[-regionWidth,regionWidth]);
 
 %% Define region analysis parameters
-numRegions = 10;
-regionLength = 13;%in microns
+numRegions = 30;
+regionLength = 2;%in microns
 % numBins = 50;
 % edge = 100;%determines how far farthest bin is from zero
-edges = (-70:.005:70)*pixelConv/timeConv;
+edges = (-scaleVal:dx:scaleVal)*pixelConv/timeConv;
 regionMidPts = zeros(1,numRegions);
 for region = 1:numRegions
     regionMidPts(region) = (((region-1)*(regionLength))+(region*regionLength))/2;
 end
 
 %Making Directories to Store CSV for Each Distribution
-parRegionDir = fullfile(parDir,'ParAxisCSVs');
+parRegionDir = fullfile(parDir,sprintf('%sum Spacing',num2str(regionLength)));
 mkdir(parRegionDir);
 
-perpRegionDir = fullfile(perpDir,'PerpAxisCSVs');
+perpRegionDir = fullfile(perpDir,sprintf('%sum Spacing',num2str(regionLength)));
 mkdir(perpRegionDir);
 
 %% Create 2 dimensional parVels structure where fields are regions 
