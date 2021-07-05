@@ -1,6 +1,6 @@
 %% Define Location of CSV File
-csvName = 'AlexData';
-MTDataDir = 'C:\Users\judem\Documents\SlidingMTData\AlexDataAnalysis';
+csvName = 'LinneaOgFirst500';
+MTDataDir = 'C:\Users\judem\Documents\SlidingMTData\LinneaFirst500DataAnalysis';
 dataLoc = fullfile(MTDataDir,csvName);
 
 %% Stitch Velocity Data Sets Together
@@ -34,7 +34,7 @@ if ChOpt ~= 1
     FUNC_FilterCSVIncl(MTDataDir,MTDataDir,filtCSVName,filtCSVName,{'Ch1_Ch2'},[ChOpt,ChOpt]);
 end
 %% Filtering to create region with Desired Separation Width
-regionWidth = 0.1;%in microns
+regionWidth = 13;%in microns
 parCSVName = [filtCSVName '_ParAxis'];
 perpCSVName = [filtCSVName '_PerpAxis'];
 
@@ -48,10 +48,10 @@ FUNC_FilterCSVIncl(MTDataDir,MTDataDir,filtCSVName,perpCSVName,...
 
 %% Define region analysis parameters
 numRegions = 10;
-regionLength = 0.2;%in microns
+regionLength = 13;%in microns
 
 numBins = 50;
-edge = 2;%determines how far farthest bin is from zero
+edge = 10;%determines how far farthest bin is from zero
 edges = linspace(-edge,edge, numBins);
 regionMidPts = zeros(1,numRegions);
 for region = 1:numRegions
@@ -106,8 +106,8 @@ end
         currParVels = parVels.(currFieldName);
         avgVels(region) = mean(currParVels);
         
-        avgV_Error(region) = sqrt((1/(length(currParVels)-1))*sum((currParVels-avgVels(region)).^2));
-        avgV_Error(region) = avgV_Error(region)/sqrt(numDataDist(region));
+        avgV_Error(region) = std(currParVels);
+        avgV_Error(region) = avgV_Error(region)/sqrt(numDataDist(1,region));
     end
     scale = diff(avgVels);
     avgScale = mean(scale);

@@ -1,6 +1,11 @@
 %% Define Location of CSV File
 csvName = 'CombinedData.csv';
+<<<<<<< HEAD
 MTDataDir = 'R:\Two Channel Nematic\Alex Two Color MT Data\Ilastik Training\Analyzed Data';
+=======
+MTDataDir = 'R:\Two Channel Nematic\Alex Two Color MT Data\Ilastik Training\Analyzed Data\9 Degree Filt 5um-s Vel Filtered InterChannel\Parallel Axis 6um Width\2um Spacing';
+
+>>>>>>> 0271ca2bcefa41a83a040529f3510aab71003baa
 dataLoc = fullfile(MTDataDir,csvName);
 pixelConv = .101;
 timeConv = 1.29;
