@@ -35,4 +35,5 @@ for currFrame = 1:numFrames
     IMAGE = imread(fullfile(imageDir, imageFiles(currFrame).name));%IMAGE = objPredictions(:,:,currFrame);
     FUNC_overlayMTsImage(MTData(currFrame).MTs, IMAGE);
     pause(0.1);
+    IMAGES(:,:,currFrame) = IMAGE;
 end

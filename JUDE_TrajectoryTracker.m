@@ -1,4 +1,4 @@
-function [FIN_TRAJECTORY] = FUNC_TrajectoryTracker(MT_DATA, parameters, framesTot)
+function [FIN_TRAJECTORY] = JUDE_TrajectoryTracker(MT_DATA, parameters, framesTot)
 %%This function finds trajectories from microtubule locations and 
 %%orientations using a number of allowed parameters for cost functions.
 %%PARAMETERS is a 1x4 array containing the desired
@@ -57,24 +57,25 @@ for currMT = numel(TRAJECTORY):lastMT %Go through every MT we see (currentMT)
             TRAJECTORY(compMT) = [];                     %remove it from the list of active trajectories
             
         else
+            if MT_FRAME(currMT) > TRAJECTORY(compMT).FRAME(end)
             SCALE = mean(TRAJECTORY(compMT).LENGTH) /MT_LENGTH(currMT);
             SCALE_CHECK = SCALE < (1+MAX_SCALE) && SCALE > (1-MAX_SCALE);
+            
             if SCALE_CHECK %Check scale hasn't changed by a factor of 20% Do this first b.c. it's fastest
                 ANGLE_SIMPLE = abs(TRAJECTORY(compMT).ORIENT(end) - MT_ORIENT(currMT));  %Orientation is -pi/2 to pi/2
                 ANGLE_DIFFICULT = abs(abs(TRAJECTORY(compMT).ORIENT(end) - MT_ORIENT(currMT)) - pi) ;
                 ANGLE = min(ANGLE_SIMPLE,ANGLE_DIFFICULT);
                 if ANGLE < MAX_ROTATION  %Check angle rotation isn't more than MAX_ROTATION
                     %Get X and Y distances
-                    DISTANCE_Y = abs(TRAJECTORY(compMT).Y(end) - MT_Y(currMT));
-                    DISTANCE_X = abs(TRAJECTORY(compMT).X(end) - MT_X(currMT));
+                    DIFF_X = abs(TRAJECTORY(compMT).Y(end) - MT_Y(currMT));
+                    DIFF_Y = abs(TRAJECTORY(compMT).X(end) - MT_X(currMT));
                     %Get total distance, and the distance in the parallel bsais
-                    DISTANCE  = sqrt(  DISTANCE_X^2 + DISTANCE_Y^2  );
-                    if DISTANCE < MAX_DISPLACEMENT %Check distance is less than max displacement 
-                        if MT_FRAME(currMT) > TRAJECTORY(compMT).FRAME(end)
-                            CANDIDATES = [CANDIDATES compMT];
-                        end
+                    DIFF_POS  = sqrt(  DIFF_Y^2 + DIFF_X^2  );
+                    if DIFF_POS < MAX_DISPLACEMENT %Check distance is less than max displacement 
+                        CANDIDATES = [CANDIDATES compMT];  
                     end
                 end
+            end
             end
             compMT = compMT + 1;
         end
@@ -84,22 +85,59 @@ for currMT = numel(TRAJECTORY):lastMT %Go through every MT we see (currentMT)
     %MATCHES
     if length(CANDIDATES) > 1
         for currConflict = CANDIDATES
-            if TRAJECTORY(currConflict).FRAME(end) == (MT_FRAME(currMT) - 3)
+            if TRAJECTORY(currConflict).FRAME(end) <= (MT_FRAME(currMT) - 3)
                 CANDIDATES(find(currConflict)) = []; 
             end
         end
     end
     if length(CANDIDATES) > 1
-    DISTANCE_ARRAY = []; %Set it to an impossible value first
+    CANDIDATE_LENGTHS = zeros(size(CANDIDATES));
+    DIFF_POS_ARRAY = []; %Set it to an impossible value first
         for currConflict = CANDIDATES
+            CANDIDATE_LENGTHS(currConflict) = (length(TRAJECTORY(currConflict).FRAME) > 1);
+        end
+        if (isempty(find(CANDIDATE_LENGTHS == 0, 1)))
+            for currConflict = CANDIDATES
+          
+                    DIFF_X = diff(TRAJECTORY(currConflict).X); 
+                    DIFF_Y = diff(TRAJECTORY(currConflict).Y);
+                    
+                    DIFF_FRAME = TRAJECTORY(currConflict).FRAME(end)-TRAJECTORY(currConflict).FRAME(end-1);
+                   
+                    DIFF_X_PRED = DIFF_X(end)/DIFF_FRAME;
+                    DIFF_Y_PRED = DIFF_Y(end)/DIFF_FRAME;
+                    
+                    X_PRED = TRAJECTORY(currConflict).X(end) + DIFF_X_PRED;
+                    Y_PRED = TRAJECTORY(currConflict).Y(end) + DIFF_Y_PRED;
+                    POS_PRED = (X_PRED^2 + Y_PRED^2);
+                    
+                    X_ACTUAL = MT_X(currMT);
+                    Y_ACTUAL = MT_Y(currMT);
+                    
+                    DIFF_X = abs(X_ACTUAL - X_PRED);
+                    DIFF_Y = abs(Y_ACTUAL - Y_PRED);
+                    %Get total distance, and the distance in the parallel basis
+                    
+                    DIFF_POS  = sqrt(DIFF_X^2 + DIFF_Y^2);
+                    DIFF_POS_ARRAY = [DIFF_POS_ARRAY DIFF_POS];
+            end
+
+        INDEX = find(DIFF_POS_ARRAY == min(DIFF_POS_ARRAY));
+        CANDIDATES = CANDIDATES(INDEX);
+        else
+            DISTANCE_ARRAY = [];
+            for currConflict = CANDIDATES
+          
                     DISTANCE_Y = abs(TRAJECTORY(currConflict).Y(end) - MT_Y(currMT));
                     DISTANCE_X = abs(TRAJECTORY(currConflict).X(end) - MT_X(currMT));
                     %Get total distance, and the distance in the parallel bsais
                     DISTANCE  = sqrt(  DISTANCE_X^2 + DISTANCE_Y^2  );
                     DISTANCE_ARRAY = [DISTANCE_ARRAY DISTANCE];
-        end
+            end
        INDEX = find(DISTANCE_ARRAY == min(DISTANCE_ARRAY));
        CANDIDATES = CANDIDATES(INDEX);
+       end
+        
     end
 
     

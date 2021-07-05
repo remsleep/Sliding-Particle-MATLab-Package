@@ -1,5 +1,5 @@
 %% Define directory
- currDir = 'E:\Two Channel Nematic\Linnea Data\forRemi\Batch1\tifs';
+ currDir = 'C:\Users\judem\Documents\SlidingMTData\ForLinneaTifs\Data tifs\C1 tifs';
  DATA_PATH = fullfile(currDir);
  [~, ySize] = FUNC_getImgDims(DATA_PATH, 'tif');
  

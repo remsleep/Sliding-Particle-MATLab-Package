@@ -1,120 +1,82 @@
-%% Define variables and parameters
-csvName = 'CombinedData';
-combinedDir = 'C:\Users\Jude\Documents\SlidingMTData';
-dt = 1;
-pixelConv = 0.101;%meters/pixels
-timeConv = 1.29;%seconds/frame
+%% Description
+% This script takes in object classification data from Ilastik and returns
+% velocity pair information
 
-%% Define directory and import Ilastik Data
+%% Define directory
 dataDir = 'C:\Users\judem\Documents\SlidingMTData\ForLinneaTifs\Data tifs';
-dataName = 'C1 tifs.h5';
-dataField = '/table';
-MTTable = FUNC_IlastikH5Reader(dataDir,dataName,dataField);
+imgDirs = {'R:\Two Channel Nematic\Alex Two Color MT Data\Data Set 1\Channel 1 1150 frames\C1 tifs', ...
+    'R:\Two Channel Nematic\Alex Two Color MT Data\Data Set 1\Channel 2 1150 frames\C2 tifs'};
+dataNames = {'C1 tifs_Object Predictions.h5','C2 tifs_Object Predictions.h5'};
 
-predictionsName = 'C1 tifs_Object Predictions.h5';
-objField = '/exported_data';
-objPredictions = FUNC_IlastikH5Reader(dataDir,predictionsName,objField);
-objPredictions = squeeze(objPredictions);
-objPredictions = flipud(objPredictions);
-objPredictions = fliplr(permute(objPredictions,[2,1,3]));
+csvName = 'CombinedData';
+outDir = 'R:\Two Channel Nematic\Alex Two Color MT Data\Ilastik Training\Analyzed Data';
 
-outDir1 = dataDir;
-% get image dimensions
-xSize = size(squeeze(objPredictions),1);
-ySize = size(squeeze(objPredictions),2);
-numFrames = size(squeeze(objPredictions),3);
+dataIDs = 1;
+[xSize, ySize] = FUNC_getImgDims(dataDir, 'tif');
+testImgCount = 5;
+pixelConv = .101;       %in um/pix
+timeConv = 1.29;        %in sec/frame
+dt = 1;
 
-%% Create Array with MT Data
-% MT_x_length = MTTable.BoundingBoxMaximum_0 - MTTable.BoundingBoxMinimum_0;
-% MT_y_length = MTTable.BoundingBoxMaximum_1 - MTTable.BoundingBoxMinimum_1;
-% MT_slope = MT_y_length./MT_x_length;
-% 
-Frame = double(MTTable.timestep + 1);% Frame = double(MTTable.timestep + 1);
-CentroidX = double(MTTable.CenterOfTheObject_0);
-CentroidY = double(MTTable.CenterOfTheObject_1);
-MajorAxisLength = double(2*MTTable.RadiiOfTheObject_0);
-MinorAxisLength = double(2*MTTable.RadiiOfTheObject_1);
-Orientation = double(atan2(MTTable.PrincipalComponentsOfTheObject_1,MTTable.PrincipalComponentsOfTheObject_0));
+%% Get Tracer particles
+MT_DATA = FUNC_TracerFinderIlastik(dataDir, dataNames, dataIDs);
 
-% allMTData = [Frame'; MajorAxisLength'; Orientation'; CentroidX'; CentroidY'];
+%% Get data set indices
+channelInfo = [MT_DATA.Set];
 
-% CentroidX = double(MTTable.CenterOfTheObject_0);
-% CentroidY = double(MTTable.CenterOfTheObject_1);
-% MajorAxisLength = double(sqrt((MT_x_length.^2)+(MT_y_length.^2)));
-% MinorAxisLength = 3*ones(1,length(MTTable.timestep));
-% Orientation = sign(MTTable.PrincipalComponentsOfTheObject_1) .* double(atan2(MT_y_length, MT_x_length));
+%% Iterate through each data set
+allTrajIndex = 1;
+allTrajs = struct();
+allRHTrajs = struct();
+fileIDVec = [];
+for fileIndex = 1:numel(dataNames)
+    
+    validFrames = (channelInfo == fileIndex);
+    currImgDir = imgDirs{fileIndex};
+    currMTData = FUNC_MTStructure2Array(MT_DATA(validFrames));
+    
+    % Load images for trajectory preparation
+    imgNames = dir(fullfile(currImgDir, '*.tif'));
+    IMAGES = zeros(xSize, ySize, testImgCount);
+    for currFrame = 1:testImgCount
 
+        IMAGES(:,:,currFrame) = imread(fullfile(currImgDir,imgNames(currFrame).name));
 
-allMTData = [Frame'; MajorAxisLength'; Orientation'; CentroidX'; CentroidY'];
-
-%% Overlay MTs Predictions on MT Images
-% define directory and name of images
-imageLoc = 'C:\Users\judem\Documents\SlidingMTData\ForLinneaTifs\Data tifs';
-imageFile = 'C1 tifs';
-imageDir = fullfile(imageLoc,imageFile);
-
-% creating MTs structure containing information stored in allMTData
-MTData = struct();
-for frame = 1:numFrames
-    mtIndicesThisFrame = find(allMTData(1,:) == frame);
-    for mtNum = 1:length(mtIndicesThisFrame)
-        MTData(frame).MTs(mtNum).Centroid = [CentroidX(mtIndicesThisFrame(mtNum)), CentroidY(mtIndicesThisFrame(mtNum))];
-        MTData(frame).MTs(mtNum).MajorAxisLength = MajorAxisLength(mtIndicesThisFrame(mtNum));
-        MTData(frame).MTs(mtNum).MinorAxisLength = MinorAxisLength(mtIndicesThisFrame(mtNum));
-        MTData(frame).MTs(mtNum).Orientation = rad2deg(Orientation(mtIndicesThisFrame(mtNum)));
     end
+    
+    % Find Trajectories from detected Tracers
+    trajectoryParams = FUNC_getTrajectoryParameters(currMTData, IMAGES, testImgCount);
+    TRAJECTORY = FUNC_TrajectoryTracker(currMTData, trajectoryParams);
+    
+    % Convert to right-handed axis system by flipping y
+    RH_TRAJECTORY = FUNC_LeftToRightInvert(TRAJECTORY, ySize, 'Y');
+
+    % Combine trajectories
+    if fileIndex == 1
+        allTrajs = TRAJECTORY(1);
+        allRHTrajs = TRAJECTORY(1);
+    end
+    
+    % Store Trajectory data in encompassing all trajectory tensor
+    allTrajs(allTrajIndex:(allTrajIndex+numel(TRAJECTORY)-1)) = TRAJECTORY;
+    allRHTrajs(allTrajIndex:(allTrajIndex+numel(TRAJECTORY)-1)) = RH_TRAJECTORY;
+    allTrajIndex = allTrajIndex + numel(TRAJECTORY);
+    
+    % Generate identifying vector to discern different data sets
+    fieldNames = fieldnames(TRAJECTORY);
+    currIDVec = fileIndex*ones( 1, numel([TRAJECTORY.(fieldNames{1})]) );
+    fileIDVec = [fileIDVec currIDVec];
+    
 end
 
-% Run Through Each Image and Overlay Predicted MT Locations,
-% Orientations,etc.
-%imageFiles = dir([imageDir '\*.tif']);
-for currFrame = 1:numFrames
-    IMAGE = objPredictions(:,:,currFrame);%IMAGE = imread(fullfile(imageDir, imageFiles(currFrame).name));
-    FUNC_overlayMTsImage(MTData(currFrame).MTs, IMAGE);
-    pause(0.1);
-end
+%% Generate tracks.m [x,y,frame,orientation,ID,channel]
+trajsArray = FUNC_Structure2Array(allRHTrajs);
+tracks = [trajsArray(2,:); trajsArray(3,:); trajsArray(1,:); ...
+    trajsArray(5,:); trajsArray(6,:); fileIDVec]'; 
 
-%% Find Trajectories from detected Tracers
-trajectoryParams = FUNC_getTrajectoryParameters(allMTData, IMAGES, 20);
-TRAJECTORY = FUNC_TrajectoryTracker(allMTData, trajectoryParams);
-
-%% Convert to right-handed axis system by flipping y
-LH_TRAJECTORY = TRAJECTORY;
-TRAJECTORY = FUNC_LeftToRightInvert(TRAJECTORY, ySize, 'Y');
-
-%% Plot Trajectories
-FUNC_TrajectoryOverlayViewerImg(LH_TRAJECTORY, IMAGES, 0)
-
-%% Save variables
-% %  save(fullfile(currDir,'imageData.mat'),'IMAGES','-v7.3');              %%This variable is large
-saveDir1 = fullfile(outDir1, '');
-mkdir(saveDir1);
-save(fullfile(saveDir1,'tracerData.mat'),'allMTData');
-save(fullfile(saveDir1,'tracerDataStruct.mat'),'MT_DATA');
-save(fullfile(saveDir1,'trajectoryData.mat'),'TRAJECTORY');
-save(fullfile(saveDir1,'plottingTrajectoryData.mat'),'LH_TRAJECTORY');
-%  save(fullfile(saveDir,'calculatingTrajectoryData.mat'),'trajectoryArray');
-save(fullfile(saveDir1,'parameters.mat'),'tracerParams','trajectoryParams');
-
-%% Load trajectories
-ch1Struct = load(fullfile(saveDir1, 'tracks.mat'));
-fields = fieldnames(ch1Struct);
-trajs1 = ch1Struct.(fields{1});
-
-%% Convert to arrays
-[trajs1,FIELDS] = FUNC_Structure2Array(trajs1Struct);
-
-%% Rearrange into [x, y, frame, orient, ID, channel]
-% tracks = [trajs1(2,:); trajs1(3,:); trajs1(1,:); trajs1(5,:); trajs1(6,:); ones(1,size(trajs1,2))]';
-tracks = [trajs1, ones(size(trajs1,1),1)]';
-%% Save 
-% mkdir(combinedDir);
-save(fullfile(combinedDir, 'tracksWChannel.mat'), 'tracks');
+%% Save tracks.m
+save(fullfile(outDir, 'tracks.mat'), 'tracks');
 
 %% Find velocity pairs from trajectories
-FUNC_Trajs2VelPairs(combinedDir,combinedDir,[csvName '_unscaled'],dt,1,1);
-FUNC_Trajs2VelPairs(combinedDir,combinedDir,csvName,dt,pixelConv,timeConv);
-
-%% Check with Linnea analysis
-BinInterframeRodPairDetails2(combinedDir,[csvName '_unscaled'],1,1,1,1149)
-BinInterframeRodPairDetails2(combinedDir,[csvName '_unscaled'],timeConv,pixelConv,1,1149)
+FUNC_Trajs2VelPairs(outDir,outDir,[csvName '_unscaled'],dt,1,1);
+FUNC_Trajs2VelPairs(outDir,outDir,csvName,dt,pixelConv,timeConv);
