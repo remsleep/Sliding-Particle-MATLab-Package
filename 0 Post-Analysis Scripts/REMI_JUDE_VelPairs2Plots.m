@@ -1,10 +1,10 @@
 %% Define Location of CSV File
 csvName = 'CombinedData.csv';
-MTDataDir = 'R:\Two Channel Nematic\Alex Two Color MT Data\Ilastik Training\Analyzed Data\9 Degree Filt 5um-s Vel Filtered InterChannel\Parallel Axis 6um Width\2um Spacing';
+MTDataDir = 'R:\Two Channel Nematic\Alex Two Color MT Data\Ilastik Training\Analyzed Data';
 dataLoc = fullfile(MTDataDir,csvName);
 pixelConv = .101;
 timeConv = 1.29;
-scaleVal = 350;
+scaleVal = 100000000;
 dx = scaleVal/14000;
 
 %% Stitch Velocity Data Sets Together

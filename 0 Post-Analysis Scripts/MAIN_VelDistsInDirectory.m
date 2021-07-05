@@ -35,14 +35,14 @@ for currFile = 1:numel(fileNames)
 end
 
 %% Iterate through each file and plot more controlled spacing distributions
-conEdges = -10:.1:10;
+conEdges = (-10:.1:10)*2;
 figure
 hold on
 for currFile = 1:numel(fileNames)
     
     currDir = fullfile(fileNames(currFile).folder, fileNames(currFile).name);
     [sumN,edges,outlierNum] = FUNC_CSVHistogram(currDir,fieldName,conEdges);
-    scatter(edges(2:end),(sumN),'filled')
+    plot(edges(2:end),(sumN))
 
     
 end

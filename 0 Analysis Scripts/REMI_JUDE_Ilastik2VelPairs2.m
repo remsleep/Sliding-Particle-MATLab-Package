@@ -1,14 +1,14 @@
 %% Define variables and parameters
 csvName = 'CombinedData';
-combinedDir = 'R:\Two Channel Nematic\Alex Two Color MT Data\Ilastik Training';
+combinedDir = 'R:\Two Channel Nematic\2021-05-31\100uM ATP Single Parafilm Chamber\Data Analysis\Batch 3';
 dt = 1;
-pixelConv = 0.101;%meters/pixels
-timeConv = 1.29;%seconds/frame
-%% Define directory and import Ilastik Object Predictions
-dataDir = 'R:\Two Channel Nematic\Alex Two Color MT Data\Ilastik Training';
-dataName = 'C2_all.h5';
+pixelConv = 0.160;      %um/pixels
+timeConv = 0.5;         %seconds/frame
 
-predictionsName = 'C1_all_Object Predictions.h5';
+%% Define directory and import Ilastik Object Predictions
+dataDir = 'R:\Two Channel Nematic\2021-05-31\100uM ATP Single Parafilm Chamber\Batch 3';
+predictionsName = '488_all_Object Predictions.h5';
+
 objField = '/exported_data';
 objPredictions = FUNC_IlastikH5Reader(dataDir,predictionsName,objField);
 objPredictions = squeeze(objPredictions);
@@ -33,7 +33,7 @@ for currFrame = 1:numFrames
 end
 
 %% Overlay MT Data over MT images
-imageLoc = 'R:\Two Channel Nematic\Alex Two Color MT Data\Data Set 1\Channel 1 1150 frames\C1 tifs';
+imageLoc = 'R:\Two Channel Nematic\2021-05-31\100uM ATP Single Parafilm Chamber\Batch 3\488';
 % imageFile = 'C1 tifs';
 % imageDir = fullfile(imageLoc,imageFile);
 imageFiles = dir(fullfile(imageLoc, '\*.tif'));

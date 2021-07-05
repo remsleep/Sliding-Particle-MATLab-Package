@@ -3,19 +3,19 @@
 % velocity pair information
 
 %% Define directory
-dataDir = 'R:\Two Channel Nematic\Alex Two Color MT Data\Ilastik Training';
-imgDirs = {'R:\Two Channel Nematic\Alex Two Color MT Data\Data Set 1\Channel 1 1150 frames\C1 tifs', ...
-    'R:\Two Channel Nematic\Alex Two Color MT Data\Data Set 1\Channel 2 1150 frames\C2 tifs'};
-dataNames = {'C1_all_Object Predictions','C2_all_Object Predictions.h5'};
+dataDir = 'R:\Two Channel Nematic\2021-05-31\100uM ATP Single Parafilm Chamber\Batch 1';
+imgDirs = {'R:\Two Channel Nematic\2021-05-31\100uM ATP Single Parafilm Chamber\Batch 1\488'};
+dataNames = {'488_all_Object Predictions.h5'};
+channelIndices = {1};
 
 csvName = 'CombinedData';
-outDir = 'R:\Two Channel Nematic\Alex Two Color MT Data\Ilastik Training\Analyzed Data';
+outDir = 'R:\Two Channel Nematic\2021-05-31\100uM ATP Single Parafilm Chamber\Data Analysis\Batch 1';
 
 dataIDs = 1;
 [xSize, ySize] = FUNC_getImgDims(dataDir, 'tif');
 testImgCount = 5;
-pixelConv = .101;       %in um/pix
-timeConv = 1.29;        %in sec/frame
+pixelConv = .16;       %in um/pix
+timeConv = 0.5;        %in sec/frame
 dt = 1;
 
 %% Get Tracer particles
@@ -64,7 +64,7 @@ for fileIndex = 1:numel(dataNames)
     
     % Generate identifying vector to discern different data sets
     fieldNames = fieldnames(TRAJECTORY);
-    currIDVec = fileIndex*ones( 1, numel([TRAJECTORY.(fieldNames{1})]) );
+    currIDVec = channelIndices{fileIndex}*ones( 1, numel([TRAJECTORY.(fieldNames{1})]) );
     fileIDVec = [fileIDVec currIDVec];
     
 end
@@ -76,6 +76,8 @@ tracks = [trajsArray(2,:); trajsArray(3,:); trajsArray(1,:); ...
 
 %% Save tracks.m
 save(fullfile(outDir, 'tracks.mat'), 'tracks');
+save(fullfile(outDir, 'trajectories.mat'), 'allRHTrajs');
+save(fullfile(outDir, 'LHtrajectories.mat'), 'allTrajs');
 
 %% Find velocity pairs from trajectories
 FUNC_Trajs2VelPairs(outDir,outDir,[csvName '_unscaled'],dt,1,1);
