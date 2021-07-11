@@ -145,4 +145,4 @@ while trajNum <= length(TRAJECTORY)
 end
 
 %Remove the 1st data point we added earlier
-FIN_TRAJECTORY(1) = [];
+FIN_TRAJECTORY(1:2) = [];

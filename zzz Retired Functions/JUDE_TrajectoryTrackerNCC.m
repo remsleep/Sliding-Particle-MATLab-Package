@@ -151,7 +151,7 @@ for currMT = numel(TRAJECTORY)+1:lastMT %Go through every MT we see (currentMT)
                     if DISTANCE < MAX_DISPLACEMENT %Check distance is less than max displacement 
                           distFromPred = sqrt(((trajX(end) - posPred(currFrame - trajFrame(end),1))^2) + ...
                                         (((trajY(end) - posPred(currFrame - trajFrame(end),2))^2)));%Pythagorean Thm
-                          if distFromPred < 50
+                          if distFromPred < 100
                                CANDIDATES(compMT) = compMT;      
                           end
                     end
