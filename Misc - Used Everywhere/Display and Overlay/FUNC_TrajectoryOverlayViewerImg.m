@@ -24,7 +24,7 @@ end
 TFMat = FUNC_TrajectoryInFrameMatrix(TRAJECTORY, FRAMES_TOTAL);
 
 %Iterate through each frame and plot trajectories over images
-for currFrame = 1:FRAMES_TOTAL
+for currFrame = 1000:FRAMES_TOTAL
     
     %Load and display image at currFrames
     currImg = IMAGES(:,:,currFrame);
